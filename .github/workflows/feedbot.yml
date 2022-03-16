@@ -2,6 +2,7 @@ name: FeedBot
 on:
   schedule:
     - cron: '0/5 * * * *'
+  workflow_dispatch:
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
