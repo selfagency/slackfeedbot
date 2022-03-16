@@ -30,6 +30,7 @@ jobs:
         uses: 'mikepenz/release-changelog-builder-action@v2'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Create release
         uses: 'zendesk/action-create-release@v1'
