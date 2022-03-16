@@ -14,5 +14,4 @@ inputs:
     description: 'Unfurl links'
     required: false
 runs:
-  using: 'node16'
-  main: 'action.js'
+  using: 'docker'
