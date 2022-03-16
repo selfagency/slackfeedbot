@@ -25,7 +25,7 @@ Push RSS feed updates to Slack via GitHub Actions
 name: FeedBot
 on:
   schedule:
-    cron: '15 * * * *'
+    - cron: '15 * * * *'
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
