@@ -1,18 +1,29 @@
 name: FeedBot
 on:
   schedule:
-    - cron: '15 * * * *'
+    - cron: '5 * * * *'
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
-      - name: FeedBot
-        uses: 'selfagency/feedbot@v1'
+      - name: NYT
+        uses: 'selfagency/feedbot@main'
         with:
-          rss:
-            - 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
-            - 'https://www.latimes.com/rss2.0.xml'
-            - 'https://feeds.washingtonpost.com/rss/homepage'
+          rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          interval: 5
+          unfurl: true
+      - name: LAT
+        uses: 'selfagency/feedbot@main'
+        with:
+          rss: 'https://www.latimes.com/rss2.0.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          interval: 5
+          unfurl: true
+      - name: WaPo
+        uses: 'selfagency/feedbot@main'
+        with:
+          rss: 'https://feeds.washingtonpost.com/rss/homepage'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          interval: 5
           unfurl: true

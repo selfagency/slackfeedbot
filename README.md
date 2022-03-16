@@ -12,14 +12,14 @@ Push RSS feed updates to Slack via GitHub Actions
 
 4. Create a new workflow in your desired repository (e.g. `.github/workflows/feedbot.yml`) and drop in the follwing, where:
 
-   - `rss` is an array of RSS feed URLs.
+   - `rss` is an RSS feed URL.
    - `slack_webhook` is the URL of your Slack webhook (this can and probably
      should be a repository or organization secret).
    - `interval` is the number of minutes between runs of the parent workflow, as
      specified in the `cron` section of the `schedule` workflow trigger.
    - `unfurl` tells Slack to show the [Open Graph](https://ogp.me/) preview. If
      set to `false` the title, date, short description, and a link to the feed item
-     will be posted.
+     will be posted. Defaults to `false`.
 
 ```
 name: FeedBot
@@ -30,14 +30,26 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
-      - name: FeedBot
-        uses: 'selfagency/feedbot@main'
+      - name: NYT
+        uses: 'selfagency/feedbot@v1'
         with:
-          rss:
-            - 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
-            - 'https://www.latimes.com/rss2.0.xml'
-            - 'https://feeds.washingtonpost.com/rss/homepage'
+          rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
           unfurl: true
+      - name: LAT
+        uses: 'selfagency/feedbot@v1'
+        with:
+          rss: 'https://www.latimes.com/rss2.0.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          interval: 15
+          unfurl: true
+      - name: WaPo
+        uses: 'selfagency/feedbot@v1'
+        with:
+          rss: 'https://feeds.washingtonpost.com/rss/homepage'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          interval: 15
+          unfurl: true
+
 ```

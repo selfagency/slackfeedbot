@@ -8,11 +8,7 @@ const { info, debug, setFailed } = core;
 const { event } = github;
 
 const validate = () => {
-  if (
-    !event?.inputs?.rss ||
-    !event?.inputs?.rss?.length ||
-    event?.inputs?.rss?.some(feed => !feed?.startsWith('http'))
-  ) {
+  if (!event?.inputs?.rss || !event?.inputs?.rss?.startsWith('http')) {
     throw new Error('No feed or invalid feed specified');
   }
 
@@ -39,60 +35,59 @@ const run = async () => {
     core.debug(`Validating inputs`);
     validate();
 
-    const rssFeeds = event?.inputs?.rss;
+    const rssFeed = event?.inputs?.rss;
     const slackWebhook = event?.inputs?.slack_webhook;
     const interval = parseInt(event?.inputs?.interval);
     const unfurl = event?.inputs?.unfurl;
 
     core.debug(`Processing ${rssFeeds.length} feeds`);
-    for (const rssFeed in rssFeeds) {
-      core.debug(`Retrieving ${event.inputs.rss}`);
-      const rss = await parse(rssFeed);
 
-      core.debug('Checking for feed items');
-      if (rss?.items?.length) {
-        core.debug(`Selecting items posted in the last ${interval} minutes`);
-        const toSend = rss.items.filter(item => dayjs(item.published).isAfter(dayjs().subtract(interval, 'minute')));
+    core.debug(`Retrieving ${event.inputs.rss}`);
+    const rss = await parse(rssFeed);
 
-        core.debug(`Sending ${toSend.length} item(s)`);
-        const payload = {
-          as_user: false,
-          username: rss.title || 'FeedBot',
-          icon_url: getFeedImg(rss, rssFeed),
-          unfurl_links: unfurl,
-          unfurl_media: unfurl,
-          blocks: toSend.forEach(item => {
-            const date = dayjs(item.published).format('MMM D @ h:mma Z');
-            let text = '';
-            if (unfurl) {
-              text = `<${item.link}|${item.title}> · ${date}`;
-            } else {
-              if (item.title) text += `*${item.title}* · ${date}\n`;
-              if (item.description) text += `${item.description}\n`;
-              if (item.link) text += `<${item.link}|Read more>`;
-            }
+    core.debug('Checking for feed items');
+    if (rss?.items?.length) {
+      core.debug(`Selecting items posted in the last ${interval} minutes`);
+      const toSend = rss.items.filter(item => dayjs(item.published).isAfter(dayjs().subtract(interval, 'minute')));
 
-            return {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text
-              }
-            };
-          })
-        };
-
-        fetch(slackWebhook, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            Accept: 'application/json'
+      core.debug(`Sending ${toSend.length} item(s)`);
+      const payload = {
+        as_user: false,
+        username: rss.title || 'FeedBot',
+        icon_url: getFeedImg(rss, rssFeed),
+        unfurl_links: unfurl,
+        unfurl_media: unfurl,
+        blocks: toSend.forEach(item => {
+          const date = dayjs(item.published).format('MMM D @ h:mma Z');
+          let text = '';
+          if (unfurl) {
+            text = `<${item.link}|${item.title}> · ${date}`;
+          } else {
+            if (item.title) text += `*${item.title}* · ${date}\n`;
+            if (item.description) text += `${item.description}\n`;
+            if (item.link) text += `<${item.link}|Read more>`;
           }
-        });
-      } else {
-        throw new Error('No feed items found');
-      }
+
+          return {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text
+            }
+          };
+        })
+      };
+
+      fetch(slackWebhook, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Accept: 'application/json'
+        }
+      });
+    } else {
+      throw new Error('No feed items found');
     }
   } catch (err) {
     core.debug('Operation failed due to error');

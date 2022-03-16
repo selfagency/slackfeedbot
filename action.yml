@@ -2,20 +2,16 @@ name: 'FeedBot'
 description: 'Push RSS feed updates to Slack via GitHub Actions'
 inputs:
   rss:
-    description: 'RSS Feed URLs'
-    type: 'sequence'
+    description: 'RSS Feed URL'
     required: true
   slack_webhook:
     description: 'Slack Webhook URL'
-    type: 'string'
     required: true
   interval:
     description: 'Minutes between workflow runs'
-    type: 'number'
     required: true
   unfurl:
     description: 'Unfurl links'
-    type: 'boolean'
     required: false
 runs:
   using: 'node16'
