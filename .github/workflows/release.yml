@@ -1,0 +1,33 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check package version
+        id: check
+        uses: 'EndBug/version-check@v1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate changelog
+        id: changelog
+        uses: 'mikepenz/release-changelog-builder-action@{latest-release}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        uses: 'zendesk/action-create-release@v1'
+        if: ${{ steps.check.outputs.changed == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.check.outputs.version}}
+          body: ${{ steps.changelog.outputs.changelog }}
+          release_name: v${{ steps.check.outputs.version}}
+          draft: false
+          prerelease: false
