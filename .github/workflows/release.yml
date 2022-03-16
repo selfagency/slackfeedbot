@@ -29,6 +29,7 @@ jobs:
       - name: Generate changelog
         id: changelog
         uses: 'mikepenz/release-changelog-builder-action@v2'
+        if: ${{ steps.check.outputs.changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
