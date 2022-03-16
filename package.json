@@ -4,6 +4,7 @@
   "main": "action.js",
   "author": "Daniel Sieradski <daniel@self.agency>",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "prepare": "husky install"
   },
