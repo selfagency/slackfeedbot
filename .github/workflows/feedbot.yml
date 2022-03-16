@@ -19,11 +19,11 @@ jobs:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 5
-          unfurl: true
+          unfurl: false
       - name: WaPo
         uses: 'selfagency/feedbot@main'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 5
-          unfurl: true
+          unfurl: false

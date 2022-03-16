@@ -64,7 +64,13 @@ const run = async () => {
             text = `<${item.link}|${item.title}> · ${date}`;
           } else {
             if (item.title) text += `*${item.title}* · ${date}\n`;
-            if (item.description) text += `${item.description}\n`;
+            if (item.description) {
+              if (item.description.length > 255) {
+                text += `${item.description.substring(0, 254)}...\n`;
+              } else {
+                text += `${item.description}\n`;
+              }
+            }
             if (item.link) text += `<${item.link}|Read more>`;
           }
 
