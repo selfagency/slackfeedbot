@@ -1,6 +1,6 @@
 {
   "name": "feedbot",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "action.js",
   "author": "Daniel Sieradski <daniel@self.agency>",
   "license": "MIT",
