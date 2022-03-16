@@ -1,9 +1,10 @@
 {
   "name": "feedbot",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "action.js",
   "author": "Daniel Sieradski <daniel@self.agency>",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "prepare": "husky install"
   },
