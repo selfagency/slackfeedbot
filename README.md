@@ -37,7 +37,7 @@ jobs:
             - 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
             - 'https://www.latimes.com/rss2.0.xml'
             - 'https://feeds.washingtonpost.com/rss/homepage'
-          slack_webhook: ${{ secrets.FEEDBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
           unfurl: true
 ```
