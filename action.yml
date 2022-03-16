@@ -3,7 +3,7 @@ description: 'Push RSS feed updates to Slack via GitHub Actions'
 inputs:
   rss:
     description: 'RSS Feed URLs'
-    type: 'array'
+    type: 'sequence'
     required: true
   slack_webhook:
     description: 'Slack Webhook URL'
