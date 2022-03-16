@@ -22,8 +22,9 @@ jobs:
       - name: Check package version
         id: check
         uses: 'EndBug/version-check@v1'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          diff-search: true
 
       - name: Generate changelog
         id: changelog
