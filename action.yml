@@ -15,3 +15,9 @@ inputs:
     required: false
 runs:
   using: 'docker'
+  image: 'Dockerfile'
+  env:
+    RSS: '${{ inputs.rss }}'
+    SLACK_WEBHOOK: '${{ inputs.slack_webhook }}'
+    INTERVAL: '${{ inputs.interval }}'
+    UNFURL: '${{ inputs.unfurl }}'
