@@ -49,7 +49,7 @@ const getFeedImg = async rssFeed => {
       `https:/favicongrabber.com/api/grab/${url.hostname
         .replace('//status.', '//')
         .replace('//feed.', '//')
-        .replace('//fees.', '//')
+        .replace('//feeds.', '//')
         .replace('//rss.', '//')}`
     );
     icons = await icons.json();
