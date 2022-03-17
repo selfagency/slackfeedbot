@@ -24,9 +24,11 @@ const validate = () => {
   }
 };
 
-const getFeedImg = (rss, rssFeed) => {
+const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
-  return `${url.protocol}://${url.hostname}/favicon.ico`;
+  const favicon = (await (await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`))?.json())?.find(
+    i => i?.sizes === '72x72'
+  )?.src;
 };
 
 const run = async () => {
@@ -82,7 +84,7 @@ const run = async () => {
       const payload = {
         as_user: false,
         username: html2txt(rss.title) || 'FeedBot',
-        icon_url: getFeedImg(rss, rssFeed),
+        icon_url: await getFeedImg(rssFeed),
         unfurl_links: unfurl,
         unfurl_media: unfurl,
         blocks
