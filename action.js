@@ -1,6 +1,6 @@
-import { compile } from 'html-to-text';
 import core from '@actions/core';
 import dayjs from 'dayjs';
+import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
 import { parse } from 'rss-to-json';
 
@@ -29,7 +29,13 @@ const getFeedImg = async rssFeed => {
   let favicon;
 
   try {
-    let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
+    let icons = await fetch(
+      `https:/favicongrabber.com/api/grab/${url.hostname
+        .replace('//status.', '//')
+        .replace('//feed.', '//')
+        .replace('//fees.', '//')
+        .replace('//rss.', '//')}`
+    );
     icons = await icons.json();
     debug(icons);
     favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src;
@@ -67,15 +73,8 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            let description = html2txt(item.description)
-              .replace(/[Rr]ead more/g, '')
-              .replace(/\n/g, ' ');
-            if (item.description.length > 140) {
-              description = `${description.substring(0, 140)}...\n`;
-            } else {
-              description += `${description}\n`;
-            }
-            text += description;
+            const description = item.description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ');
+            text += `${description}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
@@ -96,7 +95,7 @@ const run = async () => {
       if (toSend.length > 0) {
         const payload = {
           as_user: false,
-          username: html2txt(rss.title) || 'FeedBot',
+          username: rss.title ? html2txt(rss.title) : 'FeedBot',
           icon_url: await getFeedImg(rssFeed),
           unfurl_links: unfurl,
           unfurl_media: unfurl,
