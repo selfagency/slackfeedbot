@@ -23484,7 +23484,7 @@ var external_util_ = __nccwpck_require__(3837);
 
 const read = (0,external_util_.promisify)(external_fs_.readFile);
 const write = (0,external_util_.promisify)(external_fs_.writeFile);
-const { debug, setFailed, getInput } = core;
+const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = (0,html_to_text.compile)({
   wordwrap: 120
 });
@@ -23544,7 +23544,7 @@ const run = async () => {
     const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
-    const unfurl = getInput('unfurl').toString() === 'true';
+    const unfurl = getBooleanInput('unfurl');
     const cacheDir = getInput('cache_dir');
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
 

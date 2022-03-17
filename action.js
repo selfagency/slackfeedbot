@@ -11,7 +11,7 @@ import { promisify } from 'util';
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
-const { debug, setFailed, getInput } = core;
+const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = compile({
   wordwrap: 120
 });
@@ -71,7 +71,7 @@ const run = async () => {
     const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
-    const unfurl = getInput('unfurl').toString() === 'true';
+    const unfurl = getBooleanInput('unfurl');
     const cacheDir = getInput('cache_dir');
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
 
