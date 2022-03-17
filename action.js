@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'fs';
+import { mkdir, readFile, writeFile } from 'fs';
 
 import { compile } from 'html-to-text';
 import core from '@actions/core';
@@ -11,6 +11,7 @@ import { promisify } from 'util';
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
+const md = promisify(mkdir);
 const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = compile({
   wordwrap: 120
@@ -155,6 +156,12 @@ const run = async () => {
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
+          try {
+            await md(cacheDir, { recursive: true });
+          } catch (err) {
+            debug(err.message);
+          }
+
           await write(
             cachePath,
             JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])

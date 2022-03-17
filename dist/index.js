@@ -23484,6 +23484,7 @@ var external_util_ = __nccwpck_require__(3837);
 
 const read = (0,external_util_.promisify)(external_fs_.readFile);
 const write = (0,external_util_.promisify)(external_fs_.writeFile);
+const md = (0,external_util_.promisify)(external_fs_.mkdir);
 const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = (0,html_to_text.compile)({
   wordwrap: 120
@@ -23628,6 +23629,12 @@ const run = async () => {
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
+          try {
+            await md(cacheDir, { recursive: true });
+          } catch (err) {
+            debug(err.message);
+          }
+
           await write(
             cachePath,
             JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])
