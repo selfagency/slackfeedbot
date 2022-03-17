@@ -1,5 +1,9 @@
 name: 'FeedBot'
+author: 'selfagency'
 description: 'Push RSS feed updates to Slack via GitHub Actions'
+branding:
+  icon: 'rss'
+  color: 'orange'
 inputs:
   rss:
     description: 'RSS Feed URL'
