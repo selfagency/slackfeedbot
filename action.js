@@ -28,7 +28,7 @@ const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
   let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
   icons = await icons.json();
-  const favicon = icons.icons.find(i => i.sizes === '72x72')?.src;
+  const favicon = icons.icons.find(i => i?.sizes === '72x72')?.src;
 };
 
 const run = async () => {
@@ -56,7 +56,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            let description = html2txt(item.description).replace(/[Rr]ead more/g, '');
+            let description = html2txt(item.description)
+              .replace(/[Rr]ead more/g, '')
+              .replace(/\n/g, ' ');
             if (item.description.length > 140) {
               description = `${description.substring(0, 140)}...\n`;
             } else {
@@ -66,8 +68,7 @@ const run = async () => {
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
-          if (item.title) text += `${html2txt(item.title)} `;
-          if (item.link) text += `${item.link}`;
+          if (item.title) text += `<${item.link}|${html2txt(item.title)}>`;
         }
 
         return {
