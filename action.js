@@ -87,7 +87,7 @@ const run = async () => {
       if (cacheDir) {
         debug(`Retrieving previously published entries`);
         try {
-          published = JSON.stringify(await read(cachePath, 'utf8'));
+          published = JSON.parse(await read(cachePath, 'utf8'));
           debug(published);
 
           toSend = rss.items.filter(item => {

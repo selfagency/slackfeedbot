@@ -17,8 +17,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./slackfeedbot-cache
-          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: slackfeedbot-cache-
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-
       - name: NYT
         uses: 'selfagency/slackfeedbot@dev'
         with:
