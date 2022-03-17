@@ -14557,7 +14557,7 @@ const getFeedImg = (rss, rssFeed) => {
 
 const run = async () => {
   try {
-    core.debug(`Validating inputs`);
+    debug(`Validating inputs`);
     validate();
 
     const rssFeed = getInput('rss');
@@ -14565,49 +14565,52 @@ const run = async () => {
     const interval = parseInt(getInput('interval'));
     const unfurl = getInput('unfurl').toString() === 'true';
 
-    core.debug(`Retrieving ${rssFeed}`);
+    debug(`Retrieving ${rssFeed}`);
     const rss = await (0,rss_to_json_dist.parse)(rssFeed);
 
-    core.debug('Checking for feed items');
+    debug('Checking for feed items');
     if (rss?.items?.length) {
-      core.debug(`Selecting items posted in the last ${interval} minutes`);
+      debug(`Selecting items posted in the last ${interval} minutes`);
       const toSend = rss.items.filter(item => dayjs_min(item.published).isAfter(dayjs_min().subtract(interval, 'minute')));
 
-      core.debug(`Sending ${toSend.length} item(s)`);
+      const blocks = toSend.forEach(item => {
+        const date = dayjs_min(item.published).format('MMM D @ h:mma Z');
+        let text = '';
+        if (unfurl) {
+          text = `<${item.link}|${item.title}> · ${date}`;
+        } else {
+          if (item.title) text += `*${item.title}* · ${date}\n`;
+          if (item.description) {
+            if (item.description.length > 255) {
+              text += `${item.description.substring(0, 254)}...\n`;
+            } else {
+              text += `${item.description}\n`;
+            }
+          }
+          if (item.link) text += `<${item.link}|Read more>`;
+        }
+
+        return {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text
+          }
+        };
+      });
+
+      debug(`Sending ${toSend.length} item(s)`);
       const payload = {
         as_user: false,
         username: rss.title || 'FeedBot',
         icon_url: getFeedImg(rss, rssFeed),
         unfurl_links: unfurl,
         unfurl_media: unfurl,
-        blocks: toSend.forEach(item => {
-          const date = dayjs_min(item.published).format('MMM D @ h:mma Z');
-          let text = '';
-          if (unfurl) {
-            text = `<${item.link}|${item.title}> · ${date}`;
-          } else {
-            if (item.title) text += `*${item.title}* · ${date}\n`;
-            if (item.description) {
-              if (item.description.length > 255) {
-                text += `${item.description.substring(0, 254)}...\n`;
-              } else {
-                text += `${item.description}\n`;
-              }
-            }
-            if (item.link) text += `<${item.link}|Read more>`;
-          }
-
-          return {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text
-            }
-          };
-        })
+        blocks
       };
+      debug(payload);
 
-      fetch(slackWebhook, {
+      const res = await fetch(slackWebhook, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: {
@@ -14615,11 +14618,12 @@ const run = async () => {
           Accept: 'application/json'
         }
       });
+      debug(res);
     } else {
       throw new Error('No feed items found');
     }
   } catch (err) {
-    core.debug('Operation failed due to error');
+    debug('Operation failed due to error');
     setFailed(err.message);
     process.exit(1);
   }
