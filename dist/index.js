@@ -14565,8 +14565,6 @@ const run = async () => {
     const interval = parseInt(getInput('interval'));
     const unfurl = getInput('unfurl').toString() === 'true';
 
-    core.debug(`Processing ${rssFeeds.length} feeds`);
-
     core.debug(`Retrieving ${rssFeed}`);
     const rss = await rss_to_json_dist(rssFeed);
 
