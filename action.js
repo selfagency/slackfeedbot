@@ -20,12 +20,8 @@ const validate = () => {
 };
 
 const getFeedImg = (rss, rssFeed) => {
-  if (rss?.image) {
-    return rss.image;
-  } else {
-    const url = new URL(rssFeed);
-    return `https://${url.hostname}/favicon.ico`;
-  }
+  const url = new URL(rssFeed);
+  return `${url.protocol}://${url.hostname}/favicon.ico`;
 };
 
 const run = async () => {
@@ -61,9 +57,10 @@ const run = async () => {
             }
             text += description;
           }
+          if (item.link) text += `<${item.link}|Read more>`;
+        } else {
+          if (item.link) text += `${item.link}`;
         }
-
-        if (item.link) text += `${item.link}`;
 
         return {
           type: 'section',
