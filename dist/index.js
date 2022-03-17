@@ -14567,13 +14567,14 @@ const run = async () => {
 
     debug(`Retrieving ${rssFeed}`);
     const rss = await (0,rss_to_json_dist.parse)(rssFeed);
+    debug(rss);
 
     debug('Checking for feed items');
     if (rss?.items?.length) {
       debug(`Selecting items posted in the last ${interval} minutes`);
       const toSend = rss.items.filter(item => dayjs_min(item.published).isAfter(dayjs_min().subtract(interval, 'minute')));
 
-      const blocks = toSend.forEach(item => {
+      const blocks = toSend.map(item => {
         const date = dayjs_min(item.published).format('MMM D @ h:mma Z');
         let text = '';
         if (unfurl) {
@@ -14598,6 +14599,7 @@ const run = async () => {
           }
         };
       });
+      debug(blocks);
 
       debug(`Sending ${toSend.length} item(s)`);
       const payload = {
