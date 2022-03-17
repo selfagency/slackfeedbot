@@ -8,21 +8,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/feedbot@main'
+        uses: 'selfagency/feedbot@dev'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 5
           unfurl: true
       - name: LAT
-        uses: 'selfagency/feedbot@main'
+        uses: 'selfagency/feedbot@dev'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 5
           unfurl: false
       - name: WaPo
-        uses: 'selfagency/feedbot@main'
+        uses: 'selfagency/feedbot@dev'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
