@@ -82,8 +82,6 @@ const run = async () => {
 
     debug('Checking for feed items');
     if (rss?.items?.length) {
-      debug(`Selecting items posted in the last ${interval} minutes`);
-
       let toSend = [];
       let published = [];
       if (cacheDir) {
@@ -92,7 +90,7 @@ const run = async () => {
           published = JSON.stringify(await read(cachePath, 'utf8'));
 
           toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
+            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
           });
         } catch (err) {
           debug(err.message);
@@ -101,6 +99,7 @@ const run = async () => {
           });
         }
       } else {
+        debug(`Selecting items posted in the last ${interval} minutes`);
         toSend = rss.items.filter(item => {
           return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
         });
@@ -119,7 +118,7 @@ const run = async () => {
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
-          if (item.title) text += `<${item.link}|${html2txt(item.title)}>`;
+          if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
         }
 
         return {
@@ -164,7 +163,7 @@ const run = async () => {
 
           await write(
             cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])
+            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
           );
         }
       }
