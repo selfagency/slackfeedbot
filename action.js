@@ -101,3 +101,7 @@ const run = async () => {
     process.exit(1);
   }
 };
+
+(async () => {
+  await run();
+})();
