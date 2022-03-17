@@ -14566,7 +14566,7 @@ const run = async () => {
     const unfurl = getInput('unfurl').toString() === 'true';
 
     core.debug(`Retrieving ${rssFeed}`);
-    const rss = await rss_to_json_dist(rssFeed);
+    const rss = await (0,rss_to_json_dist.parse)(rssFeed);
 
     core.debug('Checking for feed items');
     if (rss?.items?.length) {

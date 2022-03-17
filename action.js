@@ -1,7 +1,7 @@
 import core from '@actions/core';
 import dayjs from 'dayjs';
 import fetch from 'node-fetch';
-import parse from 'rss-to-json';
+import { parse } from 'rss-to-json';
 
 const { info, debug, setFailed, getInput } = core;
 
