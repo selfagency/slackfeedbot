@@ -52,6 +52,7 @@ jobs:
         with:
           path: ./slackfeedbot-cache
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.3'
         with:
@@ -103,6 +104,7 @@ jobs:
         with:
           path: ./slackfeedbot-cache
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.3'
         with:
@@ -134,6 +136,7 @@ jobs:
         with:
           path: ./slackfeedbot-cache
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-
       - name: LAT
         uses: 'selfagency/feedbot@v1.2.3'
         with:
