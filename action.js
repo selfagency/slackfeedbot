@@ -1,14 +1,24 @@
 import core from '@actions/core';
+import { createHash } from 'crypto';
 import dayjs from 'dayjs';
+import { readFile, writeFile } from 'fs';
 import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
 import { parse } from 'rss-to-json';
+import TurndownService from 'turndown';
+import { promisify } from 'util';
 
+const read = promisify(readFile);
+const write = promisify(writeFile);
+const { debug, setFailed, getInput } = core;
+const turndownService = new TurndownService();
 const html2txt = compile({
   wordwrap: 120
 });
 
-const { debug, setFailed, getInput } = core;
+function hash(string) {
+  return createHash('sha256').update(string).digest('hex');
+}
 
 const validate = () => {
   if (!getInput('rss') || !getInput('rss').startsWith('http')) {
@@ -19,8 +29,12 @@ const validate = () => {
     throw new Error('No Slack webhook or invalid webhook specified');
   }
 
-  if (!getInput('interval') || parseInt(getInput('interval')).toString() === 'NaN') {
-    throw new Error('No interval or invalid interval specified');
+  if (!getInput('interval') && !getInput('cache_dir')) {
+    throw new Error('No interval or cache folder specified');
+  }
+
+  if (getInput('interval') && parseInt(getInput('interval')).toString() === 'NaN') {
+    throw new Error('Invalid interval specified');
   }
 };
 
@@ -54,9 +68,12 @@ const run = async () => {
     validate();
 
     const rssFeed = getInput('rss');
+    const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
     const unfurl = getInput('unfurl').toString() === 'true';
+    const cacheDir = getInput('cache_dir');
+    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
 
     debug(`Retrieving ${rssFeed}`);
     const rss = await parse(rssFeed);
@@ -65,7 +82,21 @@ const run = async () => {
     debug('Checking for feed items');
     if (rss?.items?.length) {
       debug(`Selecting items posted in the last ${interval} minutes`);
-      const toSend = rss.items.filter(item => dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute')));
+
+      let toSend = [];
+      let published = [];
+      if (cacheDir) {
+        debug(`Retrieving previously published entries`);
+        published = JSON.stringify(await read(cachePath, 'utf8'));
+
+        toSend = rss.items.filter(item => {
+          return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
+        });
+      } else {
+        toSend = rss.items.filter(item => {
+          return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
+        });
+      }
 
       const blocks = toSend.map(item => {
         let text = '';
@@ -73,7 +104,10 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = item.description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ');
+            const description = turndownService
+              .turndown(item.description)
+              .replace(/[Rr]ead more/g, '…')
+              .replace(/\n/g, ' ');
             text += `${description}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
@@ -112,6 +146,14 @@ const run = async () => {
           }
         });
         debug(res);
+
+        if (cacheDir) {
+          debug(`Writing cache to ${cachePath}`);
+          await write(
+            cachePath,
+            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])
+          );
+        }
       }
     } else {
       throw new Error('No feed items found');

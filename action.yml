@@ -11,9 +11,12 @@ inputs:
   slack_webhook:
     description: 'Slack Webhook URL'
     required: true
+  cache_dir:
+    description: 'Cache folder'
+    required: true
   interval:
     description: 'Minutes between workflow runs'
-    required: true
+    required: false
   unfurl:
     description: 'Unfurl links'
     required: false
