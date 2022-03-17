@@ -14541,7 +14541,7 @@ const validate = () => {
     throw new Error('No Slack webhook or invalid webhook specified');
   }
 
-  if (!getInput('interval') || parseInt(getInput('interval')).toString() !== 'NaN') {
+  if (!getInput('interval') || parseInt(getInput('interval')).toString() === 'NaN') {
     throw new Error('No interval or invalid interval specified');
   }
 };
