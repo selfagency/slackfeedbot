@@ -21347,18 +21347,16 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
+var html_to_text = __nccwpck_require__(7015);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
 ;// CONCATENATED MODULE: external "crypto"
 const external_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
 // EXTERNAL MODULE: ./node_modules/dayjs/dayjs.min.js
 var dayjs_min = __nccwpck_require__(7401);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
-var dist = __nccwpck_require__(7192);
-// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
-var html_to_text = __nccwpck_require__(7015);
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:http");
 ;// CONCATENATED MODULE: external "node:https"
@@ -21421,7 +21419,7 @@ function dataUriToBuffer(uri) {
     buffer.charset = charset;
     return buffer;
 }
-/* harmony default export */ const data_uri_to_buffer_dist = (dataUriToBuffer);
+/* harmony default export */ const dist = (dataUriToBuffer);
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: external "node:util"
 const external_node_util_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:util");
@@ -23112,7 +23110,7 @@ async function fetch(url, options_) {
 		}
 
 		if (parsedURL.protocol === 'data:') {
-			const data = data_uri_to_buffer_dist(request.url);
+			const data = dist(request.url);
 			const response = new Response(data, {headers: {'Content-Type': data.typeFull}});
 			resolve(response);
 			return;
@@ -23466,6 +23464,8 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
+// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
+var html_to_md_dist = __nccwpck_require__(7192);
 // EXTERNAL MODULE: ./node_modules/rss-to-json/dist/index.js
 var rss_to_json_dist = __nccwpck_require__(7235);
 // EXTERNAL MODULE: external "util"
@@ -23481,9 +23481,11 @@ var external_util_ = __nccwpck_require__(3837);
 
 
 
+
 const read = (0,external_util_.promisify)(external_fs_.readFile);
 const write = (0,external_util_.promisify)(external_fs_.writeFile);
-const { debug, setFailed, getInput } = core;
+const md = (0,external_util_.promisify)(external_fs_.mkdir);
+const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = (0,html_to_text.compile)({
   wordwrap: 120
 });
@@ -23543,7 +23545,7 @@ const run = async () => {
     const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
-    const unfurl = getInput('unfurl').toString() === 'true';
+    const unfurl = getBooleanInput('unfurl');
     const cacheDir = getInput('cache_dir');
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
 
@@ -23553,17 +23555,16 @@ const run = async () => {
 
     debug('Checking for feed items');
     if (rss?.items?.length) {
-      debug(`Selecting items posted in the last ${interval} minutes`);
-
       let toSend = [];
       let published = [];
       if (cacheDir) {
         debug(`Retrieving previously published entries`);
         try {
-          published = JSON.stringify(await read(cachePath, 'utf8'));
+          published = JSON.parse(await read(cachePath, 'utf8'));
+          debug(published);
 
           toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
+            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
           });
         } catch (err) {
           debug(err.message);
@@ -23572,6 +23573,7 @@ const run = async () => {
           });
         }
       } else {
+        debug(`Selecting items posted in the last ${interval} minutes`);
         toSend = rss.items.filter(item => {
           return dayjs_min(item.created).isAfter(dayjs_min().subtract(interval, 'minute'));
         });
@@ -23583,14 +23585,14 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = dist(item.description)
+            const description = html_to_md_dist(item.description)
               .replace(/[Rr]ead more/g, '…')
               .replace(/\n/g, ' ');
             text += `${description}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
-          if (item.title) text += `<${item.link}|${html2txt(item.title)}>`;
+          if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
         }
 
         return {
@@ -23627,9 +23629,15 @@ const run = async () => {
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
+          try {
+            await md(cacheDir, { recursive: true });
+          } catch (err) {
+            debug(err.message);
+          }
+
           await write(
             cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])
+            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
           );
         }
       }

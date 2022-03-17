@@ -1,16 +1,18 @@
+import { mkdir, readFile, writeFile } from 'fs';
+
+import { compile } from 'html-to-text';
 import core from '@actions/core';
 import { createHash } from 'crypto';
 import dayjs from 'dayjs';
-import { readFile, writeFile } from 'fs';
-import html2md from 'html-to-md';
-import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
+import html2md from 'html-to-md';
 import { parse } from 'rss-to-json';
 import { promisify } from 'util';
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
-const { debug, setFailed, getInput } = core;
+const md = promisify(mkdir);
+const { debug, setFailed, getInput, getBooleanInput } = core;
 const html2txt = compile({
   wordwrap: 120
 });
@@ -70,7 +72,7 @@ const run = async () => {
     const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
-    const unfurl = getInput('unfurl').toString() === 'true';
+    const unfurl = getBooleanInput('unfurl');
     const cacheDir = getInput('cache_dir');
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
 
@@ -80,17 +82,16 @@ const run = async () => {
 
     debug('Checking for feed items');
     if (rss?.items?.length) {
-      debug(`Selecting items posted in the last ${interval} minutes`);
-
       let toSend = [];
       let published = [];
       if (cacheDir) {
         debug(`Retrieving previously published entries`);
         try {
-          published = JSON.stringify(await read(cachePath, 'utf8'));
+          published = JSON.parse(await read(cachePath, 'utf8'));
+          debug(published);
 
           toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
+            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
           });
         } catch (err) {
           debug(err.message);
@@ -99,6 +100,7 @@ const run = async () => {
           });
         }
       } else {
+        debug(`Selecting items posted in the last ${interval} minutes`);
         toSend = rss.items.filter(item => {
           return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
         });
@@ -117,7 +119,7 @@ const run = async () => {
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
-          if (item.title) text += `<${item.link}|${html2txt(item.title)}>`;
+          if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
         }
 
         return {
@@ -154,9 +156,15 @@ const run = async () => {
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
+          try {
+            await md(cacheDir, { recursive: true });
+          } catch (err) {
+            debug(err.message);
+          }
+
           await write(
             cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title + item.description)))])
+            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
           );
         }
       }

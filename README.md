@@ -30,6 +30,8 @@ Push RSS feed updates to Slack via GitHub Actions
 
 ### With cache folder
 
+Hashes and caches the post title + creation date to ensure no duplicates are posted.
+
 ```
 name: SlackFeedBot
 on:
@@ -39,13 +41,19 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: NYT
-        uses: 'selfagency/feedbot@v1.2.2'
+        uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -54,6 +62,8 @@ jobs:
 
 ### With interval
 
+No cache, but maybe duplicates.
+
 ```
 name: SlackFeedBot
 on:
@@ -64,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/feedbot@v1.2.2'
+        uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -82,13 +92,19 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: NYT
-        uses: 'selfagency/feedbot@v1.2.2'
+        uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -107,19 +123,25 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: LAT
-        uses: 'selfagency/feedbot@v1.2.2'
+        uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: '~/slackfeedbot'
       - name: WaPo
-        uses: 'selfagency/feedbot@v1.2.2'
+        uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
