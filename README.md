@@ -56,7 +56,7 @@ jobs:
 name: FeedBot
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0/15 * * * *'
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
