@@ -1,22 +1,20 @@
 import core from '@actions/core';
 import dayjs from 'dayjs';
 import fetch from 'node-fetch';
-import github from '@actions/github';
 import parse from 'rss-to-json';
 
-const { info, debug, setFailed } = core;
-const { event } = github;
+const { info, debug, setFailed, getInput } = core;
 
 const validate = () => {
-  if (!event?.inputs?.rss || !event?.inputs?.rss?.startsWith('http')) {
+  if (!getInput('rss') || !getInput('rss').startsWith('http')) {
     throw new Error('No feed or invalid feed specified');
   }
 
-  if (!event?.inputs?.slack_webhook || !event?.inputs?.slack_webhook?.startsWith('https')) {
+  if (!getInput('slack_webhook') || !getInput('slack_webhook').startsWith('https')) {
     throw new Error('No Slack webhook or invalid webhook specified');
   }
 
-  if (!event?.inputs?.interval || parseInt(event?.inputs?.interval).toString() !== 'NaN') {
+  if (!getInput('interval') || parseInt(getInput('interval')).toString() !== 'NaN') {
     throw new Error('No interval or invalid interval specified');
   }
 };
@@ -35,14 +33,14 @@ const run = async () => {
     core.debug(`Validating inputs`);
     validate();
 
-    const rssFeed = event?.inputs?.rss;
-    const slackWebhook = event?.inputs?.slack_webhook;
-    const interval = parseInt(event?.inputs?.interval);
-    const unfurl = event?.inputs?.unfurl;
+    const rssFeed = getInput('rss');
+    const slackWebhook = getInput('slack_webhook');
+    const interval = parseInt(getInput('interval'));
+    const unfurl = getInput('unfurl').toString() === 'true';
 
     core.debug(`Processing ${rssFeeds.length} feeds`);
 
-    core.debug(`Retrieving ${event.inputs.rss}`);
+    core.debug(`Retrieving ${rssFeed}`);
     const rss = await parse(rssFeed);
 
     core.debug('Checking for feed items');
