@@ -23,62 +23,62 @@ jobs:
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://www.githubstatus.com/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: Google Cloud
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.cloud.google.com/en/feed.atom'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: Zoom
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.zoom.us/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: Linear
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://linearstatus.com/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: Stripe
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.stripe.com/current/atom.xml'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: New Relic
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.newrelic.com/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: Fastly
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.fastly.com/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: 1Password
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://1password.statuspage.io/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
       - name: DataDog
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://status.datadoghq.com/history.rss'
-          slack_webhook: ${{ secrets.STATUSBOT_WEBHOOK }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
