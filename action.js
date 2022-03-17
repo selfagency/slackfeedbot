@@ -1,10 +1,10 @@
 import core from '@actions/core';
-import { createHash } from 'crypto';
 import dayjs from 'dayjs';
 import { mkdir, readFile, writeFile } from 'fs';
 import html2md from 'html-to-md';
 import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
+import * as objectSha from 'object-sha';
 import { parse } from 'rss-to-json';
 import { promisify } from 'util';
 
@@ -16,9 +16,11 @@ const html2txt = compile({
   wordwrap: 120
 });
 
-function hash(string) {
-  return createHash('sha256').update(string).digest('hex');
-}
+const hash = async string => {
+  const obj = objectSha.hashable(string);
+  const hashed = await objectSha.digest(obj);
+  return hashed;
+};
 
 const validate = () => {
   if (!getInput('rss') || !getInput('rss').startsWith('http')) {
@@ -96,7 +98,7 @@ const run = async () => {
           debug(published);
 
           toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
+            return !published.find(pubbed => pubbed === hash({ title: item.title, date: item.created }));
           });
         } catch (err) {
           debug(err.message);
@@ -168,7 +170,7 @@ const run = async () => {
 
           await write(
             cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
+            JSON.stringify([...published, ...toSend.map(item => hash({ title: item.title, date: item.created }))])
           );
         }
       }

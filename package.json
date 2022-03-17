@@ -43,6 +43,7 @@
     "husky": "^7.0.4",
     "lint-staged": "^12.3.6",
     "node-fetch": "^3.2.3",
+    "object-sha": "^2.0.6",
     "prettier": "^2.6.0",
     "rss-to-json": "^2.0.2"
   }
