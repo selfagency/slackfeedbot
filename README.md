@@ -1,4 +1,4 @@
-# FeedBot
+# SlackFeedBot
 
 Push RSS feed updates to Slack via GitHub Actions
 
