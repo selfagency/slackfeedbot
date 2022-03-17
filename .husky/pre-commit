@@ -1,4 +1,6 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+./node_modules/.bin/ncc build action.js --license licenses.txt
+git add dist
 ./node_modules/.bin/lint-staged --allow-empty
