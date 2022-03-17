@@ -19,13 +19,13 @@ Push RSS feed updates to Slack via GitHub Actions
      specified in the `cron` section of the `schedule` workflow trigger.
    - `unfurl` tells Slack to show the [Open Graph](https://ogp.me/) preview. If
      set to `false` the title, date, short description, and a link to the feed item
-     will be posted. Defaults to `false`.
+     will be posted. Defaults to `false` because it's kind of flaky.
 
 ```
 name: FeedBot
 on:
   schedule:
-    - cron: '0/15 * * * *'
+    - cron: '*/15 * * * *'
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
@@ -43,13 +43,10 @@ jobs:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
-          unfurl: true
       - name: WaPo
         uses: 'selfagency/feedbot@v1'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
-          unfurl: true
-
 ```

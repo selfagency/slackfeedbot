@@ -27,4 +27,4 @@ jobs:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
-          unfurl: true
+          unfurl: false

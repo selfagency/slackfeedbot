@@ -28,7 +28,10 @@ const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
   let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
   icons = await icons.json();
+  debug(icons);
   const favicon = icons.icons.find(i => i?.sizes === '72x72')?.src;
+  debug(favicon);
+  return favcion;
 };
 
 const run = async () => {
