@@ -30,6 +30,8 @@ Push RSS feed updates to Slack via GitHub Actions
 
 ### With cache folder
 
+Hashes and caches the post title + creation date to ensure no duplicates are posted.
+
 ```
 name: SlackFeedBot
 on:
@@ -43,13 +45,13 @@ jobs:
         uses: actions/github-script@v6
         id: generate-key
         with:
-          script: core.setOuput('cache-key', new Date().valueOf())
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: slackfeedbot-cache-
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
@@ -59,6 +61,8 @@ jobs:
 ```
 
 ### With interval
+
+No cache, but maybe duplicates.
 
 ```
 name: SlackFeedBot
@@ -92,13 +96,13 @@ jobs:
         uses: actions/github-script@v6
         id: generate-key
         with:
-          script: core.setOuput('cache-key', new Date().valueOf())
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: slackfeedbot-cache-
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
@@ -123,13 +127,13 @@ jobs:
         uses: actions/github-script@v6
         id: generate-key
         with:
-          script: core.setOuput('cache-key', new Date().valueOf())
+          script: |
+            core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
-          path: ~/slackfeedbot
-          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: slackfeedbot-cache-
+          path: ./slackfeedbot-cache
+          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
       - name: LAT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
