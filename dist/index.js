@@ -23561,6 +23561,7 @@ const run = async () => {
         debug(`Retrieving previously published entries`);
         try {
           published = JSON.stringify(await read(cachePath, 'utf8'));
+          debug(published);
 
           toSend = rss.items.filter(item => {
             return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
