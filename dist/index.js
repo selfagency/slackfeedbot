@@ -23484,11 +23484,19 @@ const validate = () => {
 
 const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
-  let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
-  icons = await icons.json();
-  debug(icons);
-  const favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src || undefined;
-  debug(favicon);
+  let favicon;
+
+  try {
+    let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
+    icons = await icons.json();
+    debug(icons);
+    favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src;
+    debug(favicon);
+  } catch {
+    debug('Favicon not found');
+    favicon = undefined;
+  }
+
   return favicon;
 };
 
