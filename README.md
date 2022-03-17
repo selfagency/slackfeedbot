@@ -39,11 +39,17 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: core.setOuput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
           path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: slackfeedbot-cache-
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
@@ -82,11 +88,17 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: core.setOuput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
           path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: slackfeedbot-cache-
       - name: NYT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
@@ -107,11 +119,17 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate cache key
+        uses: actions/github-script@v6
+        id: generate-key
+        with:
+          script: core.setOuput('cache-key', new Date().valueOf())
       - name: Retrieve cache
         uses: actions/cache@v2
         with:
           path: ~/slackfeedbot
-          key: slackfeedbot-cache
+          key: slackfeedbot-cache-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: slackfeedbot-cache-
       - name: LAT
         uses: 'selfagency/feedbot@v1.2.2'
         with:
