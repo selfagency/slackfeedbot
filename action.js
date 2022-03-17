@@ -2,7 +2,7 @@ import core from '@actions/core';
 import dayjs from 'dayjs';
 import fetch from 'node-fetch';
 import github from '@actions/github';
-import { parse } from 'rss-to-json';
+import parse from 'rss-to-json';
 
 const { info, debug, setFailed } = core;
 const { event } = github;
