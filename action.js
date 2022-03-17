@@ -1,7 +1,12 @@
+import { compile } from 'html-to-text';
 import core from '@actions/core';
 import dayjs from 'dayjs';
 import fetch from 'node-fetch';
 import { parse } from 'rss-to-json';
+
+const html2txt = compile({
+  wordwrap: 120
+});
 
 const { info, debug, setFailed, getInput } = core;
 
@@ -36,7 +41,7 @@ const run = async () => {
 
     debug(`Retrieving ${rssFeed}`);
     const rss = await parse(rssFeed);
-    debug(rss);
+    // debug(rss);
 
     debug('Checking for feed items');
     if (rss?.items?.length) {
@@ -47,9 +52,9 @@ const run = async () => {
         let text = '';
 
         if (!unfurl) {
-          if (item.title) text += `*${item.title}*\n`;
+          if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            let description = item.description.replace(/[Rr]ead more/g, '');
+            let description = html2txt(item.description).replace(/[Rr]ead more/g, '');
             if (item.description.length > 140) {
               description = `${description.substring(0, 140)}...\n`;
             } else {
@@ -59,6 +64,7 @@ const run = async () => {
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
+          if (item.title) text += `${html2txt(item.title)} `;
           if (item.link) text += `${item.link}`;
         }
 
@@ -70,12 +76,12 @@ const run = async () => {
           }
         };
       });
-      debug(blocks);
+      // debug(blocks);
 
       debug(`Sending ${toSend.length} item(s)`);
       const payload = {
         as_user: false,
-        username: rss.title || 'FeedBot',
+        username: html2txt(rss.title) || 'FeedBot',
         icon_url: getFeedImg(rss, rssFeed),
         unfurl_links: unfurl,
         unfurl_media: unfurl,

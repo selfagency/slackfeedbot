@@ -29,6 +29,7 @@
     "eslint-plugin-markdown": "^2.2.1",
     "eslint-plugin-yml": "^0.14.0",
     "eslint-scope": "^7.1.1",
+    "html-to-text": "^8.1.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.6",
     "node-fetch": "^3.2.3",
