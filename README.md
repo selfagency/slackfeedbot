@@ -2,6 +2,8 @@
 
 Push RSS feed updates to Slack via GitHub Actions
 
+![Sample output](https://user-images.githubusercontent.com/2541728/158734324-de6429eb-8a21-4ca2-9959-e8eb673a42e6.png)
+
 ## How to use this Action
 
 1. Add the [Incoming Webhooks](https://slack.com/apps/A0F7XDUAZ-incoming-webhooks) app to your Slack workspace if you haven't already.
@@ -10,7 +12,7 @@ Push RSS feed updates to Slack via GitHub Actions
 
 ![Sample configuration](https://user-images.githubusercontent.com/2541728/158685833-7a221c22-c5a9-4221-8e93-0003f89a92a8.png)
 
-4. Create a new workflow in your desired repository (e.g. `.github/workflows/feedbot.yml`) and drop in the follwing, where:
+4. Create a new workflow in your desired repository (e.g. `.github/workflows/slackfeedbot.yml`) and drop in the follwing, where:
 
    - `rss` is an RSS feed URL.
    - `slack_webhook` is the URL of your Slack webhook (this can and probably
@@ -29,7 +31,7 @@ Push RSS feed updates to Slack via GitHub Actions
 ### With cache folder
 
 ```
-name: FeedBot
+name: SlackFeedBot
 on:
   schedule:
     - cron: '*/15 * * * *'
