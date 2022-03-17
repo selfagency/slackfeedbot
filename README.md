@@ -55,7 +55,7 @@ jobs:
 ### With interval
 
 ```
-name: FeedBot
+name: SlackFeedBot
 on:
   schedule:
     - cron: '*/15 * * * *'
