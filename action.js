@@ -48,7 +48,7 @@ const run = async () => {
     debug('Checking for feed items');
     if (rss?.items?.length) {
       debug(`Selecting items posted in the last ${interval} minutes`);
-      const toSend = rss.items.filter(item => dayjs(item.published).isAfter(dayjs().subtract(interval, 'minute')));
+      const toSend = rss.items.filter(item => dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute')));
 
       const blocks = toSend.map(item => {
         let text = '';
