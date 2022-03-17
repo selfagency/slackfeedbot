@@ -21347,16 +21347,18 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
-var html_to_text = __nccwpck_require__(7015);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
 ;// CONCATENATED MODULE: external "crypto"
 const external_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
 // EXTERNAL MODULE: ./node_modules/dayjs/dayjs.min.js
 var dayjs_min = __nccwpck_require__(7401);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
+var dist = __nccwpck_require__(7192);
+// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
+var html_to_text = __nccwpck_require__(7015);
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:http");
 ;// CONCATENATED MODULE: external "node:https"
@@ -21419,7 +21421,7 @@ function dataUriToBuffer(uri) {
     buffer.charset = charset;
     return buffer;
 }
-/* harmony default export */ const dist = (dataUriToBuffer);
+/* harmony default export */ const data_uri_to_buffer_dist = (dataUriToBuffer);
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: external "node:util"
 const external_node_util_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:util");
@@ -23110,7 +23112,7 @@ async function fetch(url, options_) {
 		}
 
 		if (parsedURL.protocol === 'data:') {
-			const data = dist(request.url);
+			const data = data_uri_to_buffer_dist(request.url);
 			const response = new Response(data, {headers: {'Content-Type': data.typeFull}});
 			resolve(response);
 			return;
@@ -23464,14 +23466,11 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
-// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
-var html_to_md_dist = __nccwpck_require__(7192);
 // EXTERNAL MODULE: ./node_modules/rss-to-json/dist/index.js
 var rss_to_json_dist = __nccwpck_require__(7235);
 // EXTERNAL MODULE: external "util"
 var external_util_ = __nccwpck_require__(3837);
 ;// CONCATENATED MODULE: ./action.js
-
 
 
 
@@ -23591,10 +23590,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html_to_md_dist(item.description)
-              .replace(/[Rr]ead more/g, '…')
-              .replace(/\n/g, ' ');
-            text += `${description}\n`;
+            const description = dist(item.description);
+            debug(description);
+            text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {

@@ -1,11 +1,10 @@
-import { mkdir, readFile, writeFile } from 'fs';
-
-import { compile } from 'html-to-text';
 import core from '@actions/core';
 import { createHash } from 'crypto';
 import dayjs from 'dayjs';
-import fetch from 'node-fetch';
+import { mkdir, readFile, writeFile } from 'fs';
 import html2md from 'html-to-md';
+import { compile } from 'html-to-text';
+import fetch from 'node-fetch';
 import { parse } from 'rss-to-json';
 import { promisify } from 'util';
 
@@ -118,10 +117,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html2md(item.description)
-              .replace(/[Rr]ead more/g, '…')
-              .replace(/\n/g, ' ');
-            text += `${description}\n`;
+            const description = html2md(item.description);
+            debug(description);
+            text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
