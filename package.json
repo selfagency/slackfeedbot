@@ -1,8 +1,13 @@
 {
-  "name": "feedbot",
-  "version": "1.0.22",
+  "name": "slackfeedbot",
+  "version": "1.1.0",
   "license": "MIT",
   "author": "Daniel Sieradski <daniel@self.agency>",
+  "description": "Push RSS feed updates to Slack via GitHub Actions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/selfagency/slackfeedbot.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

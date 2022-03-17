@@ -1,4 +1,4 @@
-name: 'FeedBot'
+name: 'SlackFeedBot'
 author: 'selfagency'
 description: 'Push RSS feed updates to Slack via GitHub Actions'
 branding:
