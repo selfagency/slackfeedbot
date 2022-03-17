@@ -16,9 +16,9 @@ const html2txt = compile({
   wordwrap: 120
 });
 
-const hash = async string => {
-  const obj = objectSha.hashable(string);
-  const hashed = await objectSha.digest(obj);
+const hash = async obj => {
+  const toHash = objectSha.hashable(obj);
+  const hashed = await objectSha.digest(toHash);
   return hashed;
 };
 
@@ -95,11 +95,17 @@ const run = async () => {
         debug(`Retrieving previously published entries`);
         try {
           published = JSON.parse(await read(cachePath, 'utf8'));
-          debug(published);
+          // debug(published);
 
-          toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash({ title: item.title, date: item.created }));
-          });
+          for (const item in rss.items) {
+            let cacheHit = false;
+            for (const pubbed in published) {
+              if (pubbed === (await hash({ title: item.title, date: item.created }))) {
+                cacheHit = true;
+              }
+            }
+            if (cacheHit) toSend.push(item);
+          }
         } catch (err) {
           debug(err.message);
           toSend = rss.items.filter(item => {
@@ -168,10 +174,12 @@ const run = async () => {
             debug(err.message);
           }
 
-          await write(
-            cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash({ title: item.title, date: item.created }))])
-          );
+          const hashed = [...published];
+          for (const sent of toSend) {
+            hashed.push(await hash({ title: sent.title, date: sent.created }));
+          }
+
+          await write(cachePath, JSON.stringify(hashed));
         }
       }
     } else {
