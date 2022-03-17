@@ -42,22 +42,22 @@ const validate = () => {
 
 const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
-  let favicon;
+  const host = url.hostname
+    .replace('//status.', '//')
+    .replace('//feed.', '//')
+    .replace('//feeds.', '//')
+    .replace('//rss.', '//');
+  debug(`Getting favicons for ${host}`);
 
+  let favicon;
   try {
-    let icons = await fetch(
-      `https:/favicongrabber.com/api/grab/${url.hostname
-        .replace('//status.', '//')
-        .replace('//feed.', '//')
-        .replace('//feeds.', '//')
-        .replace('//rss.', '//')}`
-    );
+    let icons = await fetch(`https:/favicongrabber.com/api/grab/${host}`);
     icons = await icons.json();
-    debug(icons);
+    debug(`Icons: ${JSON.stringify(icons)}`);
     favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src;
-    debug(favicon);
-  } catch {
-    debug('Favicon not found');
+    debug(`Favicon: ${favicon}`);
+  } catch (err) {
+    debug(err.message);
     favicon = undefined;
   }
 
@@ -66,7 +66,7 @@ const getFeedImg = async rssFeed => {
 
 const run = async () => {
   try {
-    debug(`Validating inputs`);
+    debug(`Validating inputs…`);
     validate();
 
     const rssFeed = getInput('rss');
@@ -83,16 +83,16 @@ const run = async () => {
       debug(err);
     }
 
-    debug(`Retrieving ${rssFeed}`);
+    debug(`Retrieving ${rssFeed}…`);
     const rss = await parse(rssFeed);
     // debug(rss);
 
-    debug('Checking for feed items');
+    debug('Checking for feed items…');
     if (rss?.items?.length) {
       let toSend = [];
       let published = [];
       if (cacheDir) {
-        debug(`Retrieving previously published entries`);
+        debug(`Retrieving previously published entries…`);
         try {
           published = JSON.parse(await read(cachePath, 'utf8'));
           // debug(published);
@@ -113,7 +113,7 @@ const run = async () => {
           });
         }
       } else {
-        debug(`Selecting items posted in the last ${interval} minutes`);
+        debug(`Selecting items posted in the last ${interval} minutes…`);
         toSend = rss.items.filter(item => {
           return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
         });
@@ -125,8 +125,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html2md(item.description);
-            debug(description);
+            const description = html2md(item.description, {
+              skipTags: ['div', 'var']
+            });
             text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
@@ -144,7 +145,7 @@ const run = async () => {
       });
       // debug(blocks);
 
-      debug(`Sending ${toSend.length} item(s)`);
+      debug(`Sending ${toSend.length} item(s)…`);
       if (toSend.length > 0) {
         const payload = {
           as_user: false,
@@ -154,7 +155,7 @@ const run = async () => {
           unfurl_media: unfurl,
           blocks
         };
-        debug(payload);
+        debug(`Slack payload: ${JSON.stringify(payload)}`);
 
         const res = await fetch(slackWebhook, {
           method: 'POST',
@@ -164,7 +165,7 @@ const run = async () => {
             Accept: 'application/json'
           }
         });
-        debug(res);
+        debug(`Slack response: ${JSON.stringify(await res.json())}`);
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
