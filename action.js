@@ -1,21 +1,22 @@
 import core from '@actions/core';
 import dayjs from 'dayjs';
 import fetch from 'node-fetch';
+import github from '@actions/github';
 import parse from 'rss-to-json';
 
 const { info, debug, setFailed } = core;
-const { INPUT_RSS, INPUT_SLACK_WEBHOOK, INPUT_INTERVAL, INPUT_UNFURL } = process.env;
+const { event } = github;
 
 const validate = () => {
-  if (!INPUT_RSS || !INPUT_RSS.startsWith('http')) {
+  if (!event?.inputs?.rss || !event?.inputs?.rss?.startsWith('http')) {
     throw new Error('No feed or invalid feed specified');
   }
 
-  if (!INPUT_SLACK_WEBHOOK || !INPUT_SLACK_WEBHOOK.startsWith('https')) {
+  if (!event?.inputs?.slack_webhook || !event?.inputs?.slack_webhook?.startsWith('https')) {
     throw new Error('No Slack webhook or invalid webhook specified');
   }
 
-  if (!INPUT_INTERVAL || parseInt(INPUT_INTERVAL).toString() !== 'NaN') {
+  if (!event?.inputs?.interval || parseInt(event?.inputs?.interval).toString() !== 'NaN') {
     throw new Error('No interval or invalid interval specified');
   }
 };
@@ -34,30 +35,32 @@ const run = async () => {
     core.debug(`Validating inputs`);
     validate();
 
+    const rssFeed = event?.inputs?.rss;
+    const slackWebhook = event?.inputs?.slack_webhook;
+    const interval = parseInt(event?.inputs?.interval);
+    const unfurl = event?.inputs?.unfurl;
+
     core.debug(`Processing ${rssFeeds.length} feeds`);
 
     core.debug(`Retrieving ${event.inputs.rss}`);
-    const rss = await parse(RSS);
-    core.debug(rss);
+    const rss = await parse(rssFeed);
 
     core.debug('Checking for feed items');
     if (rss?.items?.length) {
-      core.debug(`Selecting items posted in the last ${INPUT_INTERVAL} minutes`);
-      const toSend = rss.items.filter(item =>
-        dayjs(item.published).isAfter(dayjs().subtract(INPUT_INTERVAL, 'minute'))
-      );
+      core.debug(`Selecting items posted in the last ${interval} minutes`);
+      const toSend = rss.items.filter(item => dayjs(item.published).isAfter(dayjs().subtract(interval, 'minute')));
 
       core.debug(`Sending ${toSend.length} item(s)`);
       const payload = {
         as_user: false,
         username: rss.title || 'FeedBot',
-        icon_url: getFeedImg(rss, RSS),
-        unfurl_links: INPUT_UNFURL,
-        unfurl_media: INPUT_UNFURL,
+        icon_url: getFeedImg(rss, rssFeed),
+        unfurl_links: unfurl,
+        unfurl_media: unfurl,
         blocks: toSend.forEach(item => {
           const date = dayjs(item.published).format('MMM D @ h:mma Z');
           let text = '';
-          if (INPUT_UNFURL) {
+          if (unfurl) {
             text = `<${item.link}|${item.title}> · ${date}`;
           } else {
             if (item.title) text += `*${item.title}* · ${date}\n`;
@@ -80,9 +83,8 @@ const run = async () => {
           };
         })
       };
-      core.debug(payload);
 
-      const res = await fetch(INPUT_SLACK_WEBHOOK, {
+      fetch(slackWebhook, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: {
@@ -90,7 +92,6 @@ const run = async () => {
           Accept: 'application/json'
         }
       });
-      core.debug(res);
     } else {
       throw new Error('No feed items found');
     }
