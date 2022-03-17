@@ -1,10 +1,11 @@
+import { readFile, writeFile } from 'fs';
+
+import { compile } from 'html-to-text';
 import core from '@actions/core';
 import { createHash } from 'crypto';
 import dayjs from 'dayjs';
-import { readFile, writeFile } from 'fs';
-import html2md from 'html-to-md';
-import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
+import html2md from 'html-to-md';
 import { parse } from 'rss-to-json';
 import { promisify } from 'util';
 
