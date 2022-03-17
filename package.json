@@ -38,12 +38,12 @@
     "eslint-plugin-promise": "^5.2.0",
     "eslint-plugin-yml": "^0.14.0",
     "eslint-scope": "^7.1.1",
+    "html-to-md": "^0.5.7",
     "html-to-text": "^8.1.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.6",
     "node-fetch": "^3.2.3",
     "prettier": "^2.6.0",
-    "rss-to-json": "^2.0.2",
-    "turndown": "^7.1.1"
+    "rss-to-json": "^2.0.2"
   }
 }
