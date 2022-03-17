@@ -18,7 +18,7 @@ Push RSS feed updates to Slack via GitHub Actions
    - `slack_webhook` is the URL of your Slack webhook (this can and probably
      should be a repository or organization secret).
    - `cache_dir` is the folder in which you want to cache RSS data to prevent
-     publishing duplicates (e.g., `~/slackfeedbot`), or alternately...
+     publishing duplicates (e.g., `./slackfeedbot-cache`), or alternately...
    - `interval` is the number of minutes between runs of the parent workflow, as
      specified in the `cron` section of the `schedule` workflow trigger (may
      publish duplicates due to post pinning).
@@ -57,7 +57,7 @@ jobs:
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: '~/slackfeedbot'
+          cache_dir: './slackfeedbot-cache'
 ```
 
 ### With interval
@@ -108,7 +108,7 @@ jobs:
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: '~/slackfeedbot'
+          cache_dir: './slackfeedbot-cache'
           unfurl: true
 ```
 
@@ -139,11 +139,11 @@ jobs:
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: '~/slackfeedbot'
+          cache_dir: './slackfeedbot-cache'
       - name: WaPo
         uses: 'selfagency/feedbot@v1.2.3'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: '~/slackfeedbot'
+          cache_dir: './slackfeedbot-cache'
 ```
