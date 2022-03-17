@@ -1,6 +1,6 @@
 {
   "name": "slackfeedbot",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "license": "MIT",
   "author": "Daniel Sieradski <daniel@self.agency>",
   "description": "Push RSS feed updates to Slack via GitHub Actions",
@@ -43,6 +43,7 @@
     "husky": "^7.0.4",
     "lint-staged": "^12.3.6",
     "node-fetch": "^3.2.3",
+    "object-sha": "^2.0.6",
     "prettier": "^2.6.0",
     "rss-to-json": "^2.0.2"
   }

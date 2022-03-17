@@ -1,11 +1,10 @@
-import { mkdir, readFile, writeFile } from 'fs';
-
-import { compile } from 'html-to-text';
 import core from '@actions/core';
-import { createHash } from 'crypto';
 import dayjs from 'dayjs';
-import fetch from 'node-fetch';
+import { mkdir, readFile, writeFile } from 'fs';
 import html2md from 'html-to-md';
+import { compile } from 'html-to-text';
+import fetch from 'node-fetch';
+import * as objectSha from 'object-sha';
 import { parse } from 'rss-to-json';
 import { promisify } from 'util';
 
@@ -17,9 +16,11 @@ const html2txt = compile({
   wordwrap: 120
 });
 
-function hash(string) {
-  return createHash('sha256').update(string).digest('hex');
-}
+const hash = async obj => {
+  const toHash = objectSha.hashable(obj);
+  const hashed = await objectSha.digest(toHash);
+  return hashed;
+};
 
 const validate = () => {
   if (!getInput('rss') || !getInput('rss').startsWith('http')) {
@@ -94,11 +95,17 @@ const run = async () => {
         debug(`Retrieving previously published entries`);
         try {
           published = JSON.parse(await read(cachePath, 'utf8'));
-          debug(published);
+          // debug(published);
 
-          toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
-          });
+          for (const item in rss.items) {
+            let cacheHit = false;
+            for (const pubbed in published) {
+              if (pubbed === (await hash({ title: item.title, date: item.created }))) {
+                cacheHit = true;
+              }
+            }
+            if (cacheHit) toSend.push(item);
+          }
         } catch (err) {
           debug(err.message);
           toSend = rss.items.filter(item => {
@@ -118,10 +125,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html2md(item.description)
-              .replace(/[Rr]ead more/g, '…')
-              .replace(/\n/g, ' ');
-            text += `${description}\n`;
+            const description = html2md(item.description);
+            debug(description);
+            text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
@@ -168,10 +174,12 @@ const run = async () => {
             debug(err.message);
           }
 
-          await write(
-            cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
-          );
+          const hashed = [...published];
+          for (const sent of toSend) {
+            hashed.push(await hash({ title: sent.title, date: sent.created }));
+          }
+
+          await write(cachePath, JSON.stringify(hashed));
         }
       }
     } else {

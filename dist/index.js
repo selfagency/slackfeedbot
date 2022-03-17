@@ -19234,6 +19234,13 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("buffer");
 
 /***/ }),
 
+/***/ 6113:
+/***/ ((module) => {
+
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
+
+/***/ }),
+
 /***/ 2361:
 /***/ ((module) => {
 
@@ -21347,16 +21354,16 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
-var html_to_text = __nccwpck_require__(7015);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
-;// CONCATENATED MODULE: external "crypto"
-const external_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
 // EXTERNAL MODULE: ./node_modules/dayjs/dayjs.min.js
 var dayjs_min = __nccwpck_require__(7401);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
+var dist = __nccwpck_require__(7192);
+// EXTERNAL MODULE: ./node_modules/html-to-text/index.js
+var html_to_text = __nccwpck_require__(7015);
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:http");
 ;// CONCATENATED MODULE: external "node:https"
@@ -21419,7 +21426,7 @@ function dataUriToBuffer(uri) {
     buffer.charset = charset;
     return buffer;
 }
-/* harmony default export */ const dist = (dataUriToBuffer);
+/* harmony default export */ const data_uri_to_buffer_dist = (dataUriToBuffer);
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: external "node:util"
 const external_node_util_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:util");
@@ -23110,7 +23117,7 @@ async function fetch(url, options_) {
 		}
 
 		if (parsedURL.protocol === 'data:') {
-			const data = dist(request.url);
+			const data = data_uri_to_buffer_dist(request.url);
 			const response = new Response(data, {headers: {'Content-Type': data.typeFull}});
 			resolve(response);
 			return;
@@ -23464,14 +23471,87 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
-// EXTERNAL MODULE: ./node_modules/html-to-md/dist/index.js
-var html_to_md_dist = __nccwpck_require__(7192);
+;// CONCATENATED MODULE: ./node_modules/object-sha/dist/esm/index.node.js
+function isObject(val) {
+    return (val != null) && (typeof val === 'object') && !(Array.isArray(val));
+}
+function objectToArraySortedByKey(obj) {
+    if (!isObject(obj) && !Array.isArray(obj)) {
+        return obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map((item) => {
+            if (Array.isArray(item) || isObject(item)) {
+                return objectToArraySortedByKey(item);
+            }
+            return item;
+        });
+    }
+    // if it is an object convert to array and sort
+    return Object.keys(obj) // eslint-disable-line
+        .sort()
+        .map((key) => {
+        return [key, objectToArraySortedByKey(obj[key])];
+    });
+}
+/**
+ * If the input object is not an Array, this function converts the object to an array, all the key-values to 2-arrays [key, value] and then sort the array by the keys. All the process is done recursively so objects inside objects or arrays are also ordered. Once the array is created the method returns the JSON.stringify() of the sorted array.
+ *
+ * @param {object} obj the object
+ *
+ * @returns {string} a JSON stringify of the created sorted array
+ */
+function hashable (obj) {
+    return JSON.stringify(objectToArraySortedByKey(obj));
+}
+
+/**
+ * My module description. Please update with your module data.
+ *
+ * @remarks
+ * This module runs perfectly in node.js and browsers
+ *
+ * @packageDocumentation
+ */
+/**
+  * Returns a string with a hexadecimal representation of the digest of the input object using a given hash algorithm.
+  * It first creates an array of the object values ordered by the object keys (using hashable(obj));
+  * then, it JSON.stringify-es it; and finally it hashes it.
+  *
+  * @param obj - An Object
+  * @param algorithm - For compatibility with browsers it should be 'SHA-1', 'SHA-256', 'SHA-384' and 'SHA-512'.
+  *
+  * @throws {RangeError}
+  * Thrown if an invalid hash algorithm is selected.
+  *
+  * @returns a promise that resolves to a string with hexadecimal content.
+  */
+function digest(obj, algorithm = 'SHA-256') {
+    const algorithms = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
+    if (!algorithms.includes(algorithm)) {
+        throw RangeError(`Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`);
+    }
+    return (async function (obj, algorithm) {
+        const encoder = new TextEncoder();
+        const hashInput = encoder.encode(hashable(obj)).buffer;
+        let digest = '';
+        {
+            const nodeAlg = algorithm.toLowerCase().replace('-', '');
+            digest = (__nccwpck_require__(6113).createHash)(nodeAlg).update(Buffer.from(hashInput)).digest('hex'); // eslint-disable-line
+        }
+        /* eslint-enable no-lone-blocks */
+        return digest;
+    })(obj, algorithm);
+}
+
+
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXgubm9kZS5qcyIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL3RzL2hhc2hhYmxlLnRzIiwiLi4vLi4vc3JjL3RzL2luZGV4LnRzIl0sInNvdXJjZXNDb250ZW50IjpudWxsLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSxTQUFTLFFBQVEsQ0FBRSxHQUFRO0lBQ3pCLE9BQU8sQ0FBQyxHQUFHLElBQUksSUFBSSxNQUFNLE9BQU8sR0FBRyxLQUFLLFFBQVEsQ0FBQyxJQUFJLEVBQUUsS0FBSyxDQUFDLE9BQU8sQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFBO0FBQzVFLENBQUM7QUFFRCxTQUFTLHdCQUF3QixDQUFFLEdBQVE7SUFDekMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxHQUFHLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBQyxPQUFPLENBQUMsR0FBRyxDQUFDLEVBQUU7UUFDekMsT0FBTyxHQUFHLENBQUE7S0FDWDtJQUNELElBQUksS0FBSyxDQUFDLE9BQU8sQ0FBQyxHQUFHLENBQUMsRUFBRTtRQUN0QixPQUFPLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQyxJQUFJO1lBQ2xCLElBQUksS0FBSyxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsSUFBSSxRQUFRLENBQUMsSUFBSSxDQUFDLEVBQUU7Z0JBQ3pDLE9BQU8sd0JBQXdCLENBQUMsSUFBSSxDQUFDLENBQUE7YUFDdEM7WUFDRCxPQUFPLElBQUksQ0FBQTtTQUNaLENBQUMsQ0FBQTtLQUNIOztJQUVELE9BQU8sTUFBTSxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUM7U0FDcEIsSUFBSSxFQUFFO1NBQ04sR0FBRyxDQUFDLENBQUMsR0FBRztRQUNQLE9BQU8sQ0FBQyxHQUFHLEVBQUUsd0JBQXdCLENBQUMsR0FBRyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsQ0FBQTtLQUNqRCxDQUFDLENBQUE7QUFDTixDQUFDO0FBRUQ7Ozs7Ozs7bUJBT3lCLEdBQVc7SUFDbEMsT0FBTyxJQUFJLENBQUMsU0FBUyxDQUFDLHdCQUF3QixDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUE7QUFDdEQ7O0FDakNBOzs7Ozs7OztBQVlBOzs7Ozs7Ozs7Ozs7O1NBYWdCLE1BQU0sQ0FBRSxHQUFRLEVBQUUsU0FBUyxHQUFHLFNBQVM7SUFDckQsTUFBTSxVQUFVLEdBQUcsQ0FBQyxPQUFPLEVBQUUsU0FBUyxFQUFFLFNBQVMsRUFBRSxTQUFTLENBQUMsQ0FBQTtJQUM3RCxJQUFJLENBQUMsVUFBVSxDQUFDLFFBQVEsQ0FBQyxTQUFTLENBQUMsRUFBRTtRQUNuQyxNQUFNLFVBQVUsQ0FBQywwQ0FBMEMsSUFBSSxDQUFDLFNBQVMsQ0FBQyxVQUFVLENBQUMsRUFBRSxDQUFDLENBQUE7S0FDekY7SUFDRCxPQUFPLENBQUMsZ0JBQWdCLEdBQUcsRUFBRSxTQUFTO1FBQ3BDLE1BQU0sT0FBTyxHQUFHLElBQUksV0FBVyxFQUFFLENBQUE7UUFDakMsTUFBTSxTQUFTLEdBQUcsT0FBTyxDQUFDLE1BQU0sQ0FBQyxRQUFRLENBQUMsR0FBRyxDQUFDLENBQUMsQ0FBQyxNQUFNLENBQUE7UUFDdEQsSUFBSSxNQUFNLEdBQUcsRUFBRSxDQUFBO1FBUVI7WUFDTCxNQUFNLE9BQU8sR0FBRyxTQUFTLENBQUMsV0FBVyxFQUFFLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxFQUFFLENBQUMsQ0FBQTtZQUN4RCxNQUFNLEdBQUcsT0FBTyxDQUFDLFFBQVEsQ0FBQyxDQUFDLFVBQVUsQ0FBQyxPQUFPLENBQUMsQ0FBQyxNQUFNLENBQUMsTUFBTSxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUMsQ0FBQTtTQUM1Rjs7UUFFRCxPQUFPLE1BQU0sQ0FBQTtLQUNkLEVBQUUsR0FBRyxFQUFFLFNBQVMsQ0FBQyxDQUFBO0FBQ3BCOzs7OyJ9
+
 // EXTERNAL MODULE: ./node_modules/rss-to-json/dist/index.js
 var rss_to_json_dist = __nccwpck_require__(7235);
 // EXTERNAL MODULE: external "util"
 var external_util_ = __nccwpck_require__(3837);
 ;// CONCATENATED MODULE: ./action.js
-
 
 
 
@@ -23490,9 +23570,11 @@ const html2txt = (0,html_to_text.compile)({
   wordwrap: 120
 });
 
-function hash(string) {
-  return (0,external_crypto_namespaceObject.createHash)('sha256').update(string).digest('hex');
-}
+const hash = async obj => {
+  const toHash = hashable(obj);
+  const hashed = await digest(toHash);
+  return hashed;
+};
 
 const validate = () => {
   if (!getInput('rss') || !getInput('rss').startsWith('http')) {
@@ -23567,11 +23649,17 @@ const run = async () => {
         debug(`Retrieving previously published entries`);
         try {
           published = JSON.parse(await read(cachePath, 'utf8'));
-          debug(published);
+          // debug(published);
 
-          toSend = rss.items.filter(item => {
-            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.created)));
-          });
+          for (const item in rss.items) {
+            let cacheHit = false;
+            for (const pubbed in published) {
+              if (pubbed === (await hash({ title: item.title, date: item.created }))) {
+                cacheHit = true;
+              }
+            }
+            if (cacheHit) toSend.push(item);
+          }
         } catch (err) {
           debug(err.message);
           toSend = rss.items.filter(item => {
@@ -23591,10 +23679,9 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html_to_md_dist(item.description)
-              .replace(/[Rr]ead more/g, '…')
-              .replace(/\n/g, ' ');
-            text += `${description}\n`;
+            const description = dist(item.description);
+            debug(description);
+            text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
@@ -23641,10 +23728,12 @@ const run = async () => {
             debug(err.message);
           }
 
-          await write(
-            cachePath,
-            JSON.stringify([...published, ...toSend.map(item => hash(JSON.stringify(item.title)))])
-          );
+          const hashed = [...published];
+          for (const sent of toSend) {
+            hashed.push(await hash({ title: sent.title, date: sent.created }));
+          }
+
+          await write(cachePath, JSON.stringify(hashed));
         }
       }
     } else {
