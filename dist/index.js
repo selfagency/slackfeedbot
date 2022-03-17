@@ -23543,25 +23543,27 @@ const run = async () => {
       // debug(blocks);
 
       debug(`Sending ${toSend.length} item(s)`);
-      const payload = {
-        as_user: false,
-        username: html2txt(rss.title) || 'FeedBot',
-        icon_url: await getFeedImg(rssFeed),
-        unfurl_links: unfurl,
-        unfurl_media: unfurl,
-        blocks
-      };
-      debug(payload);
+      if (toSend.length > 0) {
+        const payload = {
+          as_user: false,
+          username: html2txt(rss.title) || 'FeedBot',
+          icon_url: await getFeedImg(rssFeed),
+          unfurl_links: unfurl,
+          unfurl_media: unfurl,
+          blocks
+        };
+        debug(payload);
 
-      const res = await fetch(slackWebhook, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          Accept: 'application/json'
-        }
-      });
-      debug(res);
+        const res = await fetch(slackWebhook, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            Accept: 'application/json'
+          }
+        });
+        debug(res);
+      }
     } else {
       throw new Error('No feed items found');
     }
