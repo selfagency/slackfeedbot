@@ -31,20 +31,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/feedbot@v1'
+        uses: 'selfagency/slackfeedbot@v1'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
           unfurl: true
       - name: LAT
-        uses: 'selfagency/feedbot@v1'
+        uses: 'selfagency/slackfeedbot@v1'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
       - name: WaPo
-        uses: 'selfagency/feedbot@v1'
+        uses: 'selfagency/slackfeedbot@v1'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
