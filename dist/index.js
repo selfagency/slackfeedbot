@@ -14547,11 +14547,11 @@ const validate = () => {
 };
 
 const getFeedImg = (rss, rssFeed) => {
-  if (rss?.feed?.image) {
-    return rss.feed.image;
+  if (rss?.image) {
+    return rss.image;
   } else {
     const url = new URL(rssFeed);
-    return `https://www.google.com/s2/favicons?domain=${url.hostname}&size=32`;
+    return `https://${url.hostname}/favicon.ico`;
   }
 };
 
@@ -14575,21 +14575,22 @@ const run = async () => {
       const toSend = rss.items.filter(item => dayjs_min(item.published).isAfter(dayjs_min().subtract(interval, 'minute')));
 
       const blocks = toSend.map(item => {
-        const date = dayjs_min(item.published).format('MMM D @ h:mma Z');
         let text = '';
-        if (unfurl) {
-          text = `<${item.link}|${item.title}> · ${date}`;
-        } else {
-          if (item.title) text += `*${item.title}* · ${date}\n`;
+
+        if (!unfurl) {
+          if (item.title) text += `*${item.title}*\n`;
           if (item.description) {
-            if (item.description.length > 255) {
-              text += `${item.description.substring(0, 254)}...\n`;
+            let description = item.description.replace(/[Rr]ead more/g, '');
+            if (item.description.length > 140) {
+              description = `${description.substring(0, 140)}...\n`;
             } else {
-              text += `${item.description}\n`;
+              description += `${description}\n`;
             }
+            text += description;
           }
-          if (item.link) text += `<${item.link}|Read more>`;
         }
+
+        if (item.link) text += `${item.link}`;
 
         return {
           type: 'section',
