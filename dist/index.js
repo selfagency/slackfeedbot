@@ -23545,9 +23545,15 @@ const run = async () => {
     const rssFeedUrl = new URL(rssFeed);
     const slackWebhook = getInput('slack_webhook');
     const interval = parseInt(getInput('interval'));
-    const unfurl = getBooleanInput('unfurl');
     const cacheDir = getInput('cache_dir');
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
+
+    let unfurl = false;
+    try {
+      unfurl = getBooleanInput('unfurl');
+    } catch (err) {
+      debug(err);
+    }
 
     debug(`Retrieving ${rssFeed}`);
     const rss = await (0,rss_to_json_dist.parse)(rssFeed);
