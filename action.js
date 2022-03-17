@@ -2,16 +2,15 @@ import core from '@actions/core';
 import { createHash } from 'crypto';
 import dayjs from 'dayjs';
 import { readFile, writeFile } from 'fs';
+import html2md from 'html-to-md';
 import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
 import { parse } from 'rss-to-json';
-import TurndownService from 'turndown';
 import { promisify } from 'util';
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
 const { debug, setFailed, getInput } = core;
-const turndownService = new TurndownService();
 const html2txt = compile({
   wordwrap: 120
 });
@@ -104,8 +103,7 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = turndownService
-              .turndown(item.description)
+            const description = html2md(item.description)
               .replace(/[Rr]ead more/g, '…')
               .replace(/\n/g, ' ');
             text += `${description}\n`;
