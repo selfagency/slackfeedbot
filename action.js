@@ -86,11 +86,18 @@ const run = async () => {
       let published = [];
       if (cacheDir) {
         debug(`Retrieving previously published entries`);
-        published = JSON.stringify(await read(cachePath, 'utf8'));
+        try {
+          published = JSON.stringify(await read(cachePath, 'utf8'));
 
-        toSend = rss.items.filter(item => {
-          return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
-        });
+          toSend = rss.items.filter(item => {
+            return !published.find(pubbed => pubbed === hash(JSON.stringify(item.title + item.description)));
+          });
+        } catch (err) {
+          debug(err.message);
+          toSend = rss.items.filter(item => {
+            return dayjs(item.created).isAfter(dayjs().subtract(60, 'minute'));
+          });
+        }
       } else {
         toSend = rss.items.filter(item => {
           return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
