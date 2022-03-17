@@ -23484,9 +23484,9 @@ const validate = () => {
 
 const getFeedImg = async rssFeed => {
   const url = new URL(rssFeed);
-  const favicon = (await (await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`))?.json())?.find(
-    i => i?.sizes === '72x72'
-  )?.src;
+  let icons = await fetch(`https:/favicongrabber.com/api/grab/${url.hostname}`);
+  icons = await icons.json();
+  const favicon = icons.find(i => i.sizes === '72x72')?.src;
 };
 
 const run = async () => {
