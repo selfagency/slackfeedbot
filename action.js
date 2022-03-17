@@ -4,18 +4,18 @@ import fetch from 'node-fetch';
 import parse from 'rss-to-json';
 
 const { info, debug, setFailed } = core;
-const { RSS, SLACK_WEBHOOK, INTERVAL, UNFURL } = process.env;
+const { INPUT_RSS, INPUT_SLACK_WEBHOOK, INPUT_INTERVAL, INPUT_UNFURL } = process.env;
 
 const validate = () => {
-  if (!RSS || !RSS.startsWith('http')) {
+  if (!INPUT_RSS || !INPUT_RSS.startsWith('http')) {
     throw new Error('No feed or invalid feed specified');
   }
 
-  if (!SLACK_WEBHOOK || !SLACK_WEBHOOK.startsWith('https')) {
+  if (!INPUT_SLACK_WEBHOOK || !INPUT_SLACK_WEBHOOK.startsWith('https')) {
     throw new Error('No Slack webhook or invalid webhook specified');
   }
 
-  if (!INTERVAL || parseInt(INTERVAL).toString() !== 'NaN') {
+  if (!INPUT_INTERVAL || parseInt(INPUT_INTERVAL).toString() !== 'NaN') {
     throw new Error('No interval or invalid interval specified');
   }
 };
@@ -38,23 +38,26 @@ const run = async () => {
 
     core.debug(`Retrieving ${event.inputs.rss}`);
     const rss = await parse(RSS);
+    core.debug(rss);
 
     core.debug('Checking for feed items');
     if (rss?.items?.length) {
-      core.debug(`Selecting items posted in the last ${INTERVAL} minutes`);
-      const toSend = rss.items.filter(item => dayjs(item.published).isAfter(dayjs().subtract(INTERVAL, 'minute')));
+      core.debug(`Selecting items posted in the last ${INPUT_INTERVAL} minutes`);
+      const toSend = rss.items.filter(item =>
+        dayjs(item.published).isAfter(dayjs().subtract(INPUT_INTERVAL, 'minute'))
+      );
 
       core.debug(`Sending ${toSend.length} item(s)`);
       const payload = {
         as_user: false,
         username: rss.title || 'FeedBot',
         icon_url: getFeedImg(rss, RSS),
-        unfurl_links: UNFURL,
-        unfurl_media: UNFURL,
+        unfurl_links: INPUT_UNFURL,
+        unfurl_media: INPUT_UNFURL,
         blocks: toSend.forEach(item => {
           const date = dayjs(item.published).format('MMM D @ h:mma Z');
           let text = '';
-          if (UNFURL) {
+          if (INPUT_UNFURL) {
             text = `<${item.link}|${item.title}> · ${date}`;
           } else {
             if (item.title) text += `*${item.title}* · ${date}\n`;
@@ -77,8 +80,9 @@ const run = async () => {
           };
         })
       };
+      core.debug(payload);
 
-      fetch(SLACK_WEBHOOK, {
+      const res = await fetch(INPUT_SLACK_WEBHOOK, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: {
@@ -86,6 +90,7 @@ const run = async () => {
           Accept: 'application/json'
         }
       });
+      core.debug(res);
     } else {
       throw new Error('No feed items found');
     }
