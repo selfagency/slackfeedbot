@@ -165,7 +165,7 @@ const run = async () => {
             Accept: 'application/json'
           }
         });
-        debug(`Slack response: ${JSON.stringify(await res.json())}`);
+        debug(`Slack response: ${await res.text()}`);
 
         if (cacheDir) {
           debug(`Writing cache to ${cachePath}`);
