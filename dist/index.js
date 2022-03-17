@@ -23466,7 +23466,7 @@ const html2txt = (0,html_to_text.compile)({
   wordwrap: 120
 });
 
-const { info, debug, setFailed, getInput } = core;
+const { debug, setFailed, getInput } = core;
 
 const validate = () => {
   if (!getInput('rss') || !getInput('rss').startsWith('http')) {
@@ -23489,7 +23489,7 @@ const getFeedImg = async rssFeed => {
   debug(icons);
   const favicon = icons.icons.find(i => i?.sizes === '72x72')?.src;
   debug(favicon);
-  return favcion;
+  return favicon;
 };
 
 const run = async () => {
