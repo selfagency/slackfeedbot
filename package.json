@@ -26,7 +26,6 @@
     "@babel/core": "^7.17.7",
     "@babel/eslint-parser": "^7.17.0",
     "@vercel/ncc": "^0.33.3",
-    "@wakeful-cloud/html-translator": "^1.1.1",
     "babel-preset-env": "^1.7.0",
     "dayjs": "^1.11.0",
     "eslint": "^7.32.0",
@@ -45,6 +44,7 @@
     "node-fetch": "^3.2.3",
     "object-sha": "^2.0.6",
     "prettier": "^2.6.0",
-    "rss-to-json": "^2.0.2"
+    "rss-to-json": "^2.0.2",
+    "showdown": "^2.0.3"
   }
 }

@@ -1,17 +1,18 @@
 import core from '@actions/core';
-import translate from '@wakeful-cloud/html-translator';
 import dayjs from 'dayjs';
 import { mkdir, readFile, writeFile } from 'fs';
 import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
 import * as objectSha from 'object-sha';
 import { parse } from 'rss-to-json';
+import { Converter } from 'showdown';
 import { promisify } from 'util';
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
 const md = promisify(mkdir);
 const { debug, setFailed, getInput, getBooleanInput } = core;
+const converter = new Converter();
 const html2txt = compile({
   wordwrap: 120
 });
@@ -80,7 +81,7 @@ const run = async () => {
     try {
       unfurl = getBooleanInput('unfurl');
     } catch (err) {
-      debug(err);
+      debug(err.message);
     }
 
     debug(`Retrieving ${rssFeed}…`);
@@ -125,7 +126,7 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const { markdown } = translate(item.description);
+            const { markdown } = converter.makeMarkdown(item.description);
             text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
