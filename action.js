@@ -1,7 +1,7 @@
 import core from '@actions/core';
+import translate from '@wakeful-cloud/html-translator';
 import dayjs from 'dayjs';
 import { mkdir, readFile, writeFile } from 'fs';
-import html2md from 'html-to-md';
 import { compile } from 'html-to-text';
 import fetch from 'node-fetch';
 import * as objectSha from 'object-sha';
@@ -125,10 +125,8 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const description = html2md(item.description, {
-              skipTags: ['div', 'var']
-            });
-            text += `${description.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
+            const { markdown } = translate(item.description);
+            text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
         } else {
