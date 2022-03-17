@@ -31,23 +31,23 @@ const getFeedImg = (rss, rssFeed) => {
 
 const run = async () => {
   try {
-    core.debug(`Validating inputs`);
+    info(`Validating inputs`);
     validate();
 
-    core.debug(`Processing ${rssFeeds.length} feeds`);
+    info(`Processing ${rssFeeds.length} feeds`);
 
-    core.debug(`Retrieving ${event.inputs.rss}`);
+    info(`Retrieving ${event.inputs.rss}`);
     const rss = await parse(RSS);
-    core.debug(rss);
+    info(rss);
 
-    core.debug('Checking for feed items');
+    info('Checking for feed items');
     if (rss?.items?.length) {
-      core.debug(`Selecting items posted in the last ${INPUT_INTERVAL} minutes`);
+      info(`Selecting items posted in the last ${INPUT_INTERVAL} minutes`);
       const toSend = rss.items.filter(item =>
         dayjs(item.published).isAfter(dayjs().subtract(INPUT_INTERVAL, 'minute'))
       );
 
-      core.debug(`Sending ${toSend.length} item(s)`);
+      info(`Sending ${toSend.length} item(s)`);
       const payload = {
         as_user: false,
         username: rss.title || 'FeedBot',
@@ -80,7 +80,7 @@ const run = async () => {
           };
         })
       };
-      core.debug(payload);
+      info(payload);
 
       const res = await fetch(INPUT_SLACK_WEBHOOK, {
         method: 'POST',
@@ -90,12 +90,12 @@ const run = async () => {
           Accept: 'application/json'
         }
       });
-      core.debug(res);
+      info(res);
     } else {
       throw new Error('No feed items found');
     }
   } catch (err) {
-    core.debug('Operation failed due to error');
+    info('Operation failed due to error');
     setFailed(err.message);
     process.exit(1);
   }
