@@ -7,24 +7,29 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Retrieve cache
+        uses: actions/cache@v2
+        with:
+          path: ~/slackfeedbot
+          key: slackfeedbot-cache
       - name: NYT
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          cache_dir: ~/slackfeedbot
           unfurl: false
       - name: LAT
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          cache_dir: ~/slackfeedbot
           unfurl: false
       - name: WaPo
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          cache_dir: ~/slackfeedbot
           unfurl: false

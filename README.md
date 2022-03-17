@@ -17,11 +17,42 @@ Push RSS feed updates to Slack via GitHub Actions
    - `rss` is an RSS feed URL.
    - `slack_webhook` is the URL of your Slack webhook (this can and probably
      should be a repository or organization secret).
+   - `cache_dir` is the folder in which you want to cache RSS data to prevent
+     publishing duplicates (e.g., `~/slackfeedbot`), or alternately...
    - `interval` is the number of minutes between runs of the parent workflow, as
-     specified in the `cron` section of the `schedule` workflow trigger.
+     specified in the `cron` section of the `schedule` workflow trigger (may
+     publish duplicates due to post pinning).
    - `unfurl` tells Slack to show the [Open Graph](https://ogp.me/) preview. If
      set to `false` the title, date, short description, and a link to the feed item
      will be posted. Defaults to `false` because it's kind of flaky.
+
+## Examples
+
+### With cache folder
+
+```
+name: SlackFeedBot
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+jobs:
+  rss-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve cache
+        uses: actions/cache@v2
+        with:
+          path: ~/slackfeedbot
+          key: slackfeedbot-cache
+      - name: NYT
+        uses: 'selfagency/feedbot@v1.2.0'
+        with:
+          rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          cache_dir: '~/slackfeedbot'
+```
+
+### With interval
 
 ```
 name: SlackFeedBot
@@ -33,22 +64,64 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1'
+        uses: 'selfagency/feedbot@v1.2.0'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
+```
+
+### Unfurl URLs
+
+```
+name: FeedBot
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+jobs:
+  rss-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve cache
+        uses: actions/cache@v2
+        with:
+          path: ~/slackfeedbot
+          key: slackfeedbot-cache
+      - name: NYT
+        uses: 'selfagency/feedbot@v1.2.0'
+        with:
+          rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          cache_dir: '~/slackfeedbot'
           unfurl: true
+```
+
+### Multiple feeds
+
+```
+name: FeedBot
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+jobs:
+  rss-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve cache
+        uses: actions/cache@v2
+        with:
+          path: ~/slackfeedbot
+          key: slackfeedbot-cache
       - name: LAT
-        uses: 'selfagency/slackfeedbot@v1'
+        uses: 'selfagency/feedbot@v1.2.0'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          cache_dir: '~/slackfeedbot'
       - name: WaPo
-        uses: 'selfagency/slackfeedbot@v1'
+        uses: 'selfagency/feedbot@v1.2.0'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          interval: 15
+          cache_dir: '~/slackfeedbot'
 ```
