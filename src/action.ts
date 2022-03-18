@@ -20,6 +20,19 @@ const run = async () => {
     const showLink = core.getInput('show_link').length > 0 ? core.getBooleanInput('show_link') : true;
     const showDate = core.getInput('show_date').length > 0 ? core.getBooleanInput('show_date') : true;
 
+    core.debug(
+      `Processed inputs: ${JSON.stringify({
+        slackWebhook,
+        rssFeed,
+        cacheDir,
+        interval,
+        unfurl,
+        showDesc,
+        showLink,
+        showDate
+      })}`
+    );
+
     // Get RSS feed items
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
 

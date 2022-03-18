@@ -24651,7 +24651,7 @@ var checkCache = async (rss, cached) => {
         if (!cacheHit)
           output.push(item);
       }
-      import_core.default.debug(`Found ${output.length} new items`);
+      import_core.default.debug(`Found ${output.length} uncached items`);
       return output;
     } else {
       import_core.default.debug("Nothing to check");
@@ -30166,7 +30166,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDat
             text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}`
           });
         }
-        if (showDesc && text.trim().toLowerCase().startsWith("read more"))
+        if (showDesc && !text.trim().toLowerCase().startsWith("read more"))
           blocks.push({
             type: "section",
             fields,
@@ -30250,6 +30250,16 @@ var run = async () => {
     const showDesc = import_core7.default.getInput("show_desc").length > 0 ? import_core7.default.getBooleanInput("show_desc") : true;
     const showLink = import_core7.default.getInput("show_link").length > 0 ? import_core7.default.getBooleanInput("show_link") : true;
     const showDate = import_core7.default.getInput("show_date").length > 0 ? import_core7.default.getBooleanInput("show_date") : true;
+    import_core7.default.debug(`Processed inputs: ${JSON.stringify({
+      slackWebhook,
+      rssFeed,
+      cacheDir,
+      interval,
+      unfurl,
+      showDesc,
+      showLink,
+      showDate
+    })}`);
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
       const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);

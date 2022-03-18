@@ -81,7 +81,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
         if (!cacheHit) output.push(item);
       }
 
-      core.debug(`Found ${output.length} new items`);
+      core.debug(`Found ${output.length} uncached items`);
       return output;
     } else {
       core.debug('Nothing to check');

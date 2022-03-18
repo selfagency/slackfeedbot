@@ -73,7 +73,7 @@ const genPayload = async (
           });
         }
 
-        if (showDesc && text.trim().toLowerCase().startsWith('read more'))
+        if (showDesc && !text.trim().toLowerCase().startsWith('read more'))
           blocks.push({
             type: 'section',
             fields,
