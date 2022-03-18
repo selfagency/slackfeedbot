@@ -3,7 +3,7 @@ import { compile } from 'html-to-text';
 import { parseHTML } from 'linkedom';
 import showdown from 'showdown';
 import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
-import { getFeedImg } from './feedimg.js';
+import { getFeedImg } from './feedimg';
 
 const converter = new showdown.Converter();
 const html2txt = compile({

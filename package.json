@@ -13,8 +13,9 @@
   "scripts": {
     "build": "tsc --project .",
     "prepare": "husky install",
-    "start": "node dist/index.js",
-    "watch": "parcel watch"
+    "start": "node dist/index.cjs",
+    "bundle": "rm -rf dist; esbuild src/action.ts --bundle --platform=node --target=node16 --outfile=dist/index.cjs",
+    "lint-staged": "lint-staged --allow-empty"
   },
   "lint-staged": {
     "*.{js,json,md,yml}": [
@@ -38,6 +39,7 @@
     "@types/showdown": "^1.9.4",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
+    "esbuild": "^0.14.27",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^16.0.3",
@@ -50,24 +52,7 @@
     "eslint-scope": "^7.1.1",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.6",
-    "parcel": "^2.3.2",
     "prettier": "^2.6.0",
     "typescript": "^4.6.2"
-  },
-  "targets": {
-    "main": {
-      "context": "node",
-      "includeNodeModules": true,
-      "engines": {
-        "node": "16.x.x"
-      },
-      "isLibrary": true,
-      "optimize": true,
-      "sourceMap": {
-        "inline": true,
-        "inlineSources": true
-      },
-      "source": "action.js"
-    }
   }
 }
