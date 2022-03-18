@@ -2,6 +2,7 @@ import core from '@actions/core';
 import dayjs from 'dayjs';
 import { mkdir, readFile, writeFile } from 'fs';
 import { compile } from 'html-to-text';
+import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
 import * as objectSha from 'object-sha';
 import { parse } from 'rss-to-json';
@@ -13,6 +14,7 @@ const write = promisify(writeFile);
 const md = promisify(mkdir);
 const { debug, setFailed, getInput, getBooleanInput } = core;
 const converter = new Converter();
+const dom = new JSDOM();
 const html2txt = compile({
   wordwrap: 120
 });
@@ -126,7 +128,7 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
-            const { markdown } = converter.makeMarkdown(item.description);
+            const { markdown } = converter.makeMarkdown(item.description, dom.window.document);
             text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
           if (item.link) text += `<${item.link}|Read more>`;
