@@ -4,6 +4,19 @@ import core from '@actions/core';
 const validate = (): void => {
   core.debug(`Validating inputs…`);
 
+  core.debug(
+    JSON.stringify({
+      slackWebhook: core.getInput('slack_webhook'),
+      rssFeed: core.getInput('rss'),
+      cacheDir: core.getInput('cache_dir'),
+      interval: core.getInput('interval'),
+      unfurl: core.getInput('unfurl'),
+      showDesc: core.getInput('show_desc'),
+      showLink: core.getInput('show_link'),
+      showDate: core.getInput('show_date')
+    })
+  );
+
   if (!core.getInput('rss') || !core.getInput('rss').startsWith('http')) {
     throw new Error('No feed or invalid feed specified');
   }
