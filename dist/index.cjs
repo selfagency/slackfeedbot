@@ -29956,7 +29956,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/<br\/?>/g, "\n").replace(/\\-/g, "-");
+            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\n/g, "").replace(/<br\/?>/g, "\n");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${html2txt(markdown).replace(/[Rr]ead more/g, "\u2026")}
@@ -29984,6 +29984,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
       unfurl_media: unfurl,
       blocks
     };
+    import_core4.default.debug(JSON.stringify(payload));
     return payload;
   } catch (err) {
     import_core4.default.debug(err.message);

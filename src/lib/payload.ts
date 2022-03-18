@@ -30,8 +30,8 @@ const genPayload = async (
             desc = item.description
               .replace(/&gt;/g, '>')
               .replace(/&lt;/g, '<')
-              .replace(/<br\/?>/g, '\n')
-              .replace(/\\-/g, '-');
+              .replace(/\n/g, '')
+              .replace(/<br\/?>/g, '\n');
           }
           const markdown = converter.makeMarkdown(desc, document);
           text += `${html2txt(markdown).replace(/[Rr]ead more/g, '…')}\n`;
@@ -59,6 +59,7 @@ const genPayload = async (
       blocks
     };
 
+    core.debug(JSON.stringify(payload));
     return payload;
   } catch (err) {
     core.debug((<Error>err).message);
