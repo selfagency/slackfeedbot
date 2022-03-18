@@ -30230,7 +30230,7 @@ var validate = () => {
   if (import_core6.default.getInput("interval").length === 0 && import_core6.default.getInput("cache_dir").length === 0) {
     throw new Error("No interval or cache folder specified");
   }
-  if (import_core6.default.getInput("interval").length === 0 && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
+  if (import_core6.default.getInput("interval").length > 0 && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
     throw new Error("Invalid interval specified");
   }
   if (import_core6.default.getInput("unfurl").length > 0 && import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length > 0 || import_core6.default.getInput("show_link").length > 0 || import_core6.default.getInput("show_date").length > 0)) {

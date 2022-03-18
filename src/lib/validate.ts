@@ -29,7 +29,7 @@ const validate = (): void => {
     throw new Error('No interval or cache folder specified');
   }
 
-  if (core.getInput('interval').length === 0 && parseInt(core.getInput('interval')).toString() === 'NaN') {
+  if (core.getInput('interval').length > 0 && parseInt(core.getInput('interval')).toString() === 'NaN') {
     throw new Error('Invalid interval specified');
   }
 
