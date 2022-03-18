@@ -128,6 +128,7 @@ const run = async () => {
         if (!unfurl) {
           if (item.title) text += `*${html2txt(item.title)}*\n`;
           if (item.description) {
+            debug(`Item description: ${item.description}`);
             const markdown = converter.makeMarkdown(item.description, dom.window.document);
             text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
           }
