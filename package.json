@@ -15,6 +15,7 @@
     "prepare": "husky install",
     "start": "node dist/index.cjs",
     "bundle": "rm -rf dist; esbuild src/action.ts --bundle --platform=node --target=node16 --outfile=dist/index.cjs",
+    "lint": "tsc --noEmit && eslint src/. && prettier --check src/.",
     "lint-staged": "lint-staged --allow-empty"
   },
   "lint-staged": {
