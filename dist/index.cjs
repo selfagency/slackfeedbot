@@ -30166,7 +30166,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDat
             text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}`
           });
         }
-        if (showDesc && text !== "Read more")
+        if (showDesc && text.trim().toLowerCase().startsWith("read more"))
           blocks.push({
             type: "section",
             fields,

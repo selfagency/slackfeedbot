@@ -12,6 +12,7 @@ const html2txt = compile({
   wordwrap: 255
 });
 
+// Generates the payload to publish to Slack
 const genPayload = async (
   filtered: RssFeedItem[],
   unfiltered: RssFeed,
@@ -72,7 +73,7 @@ const genPayload = async (
           });
         }
 
-        if (showDesc && text !== 'Read more')
+        if (showDesc && text.trim().toLowerCase().startsWith('read more'))
           blocks.push({
             type: 'section',
             fields,

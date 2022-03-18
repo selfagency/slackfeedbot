@@ -1,5 +1,6 @@
 import core from '@actions/core';
 
+// Validate inputs
 const validate = (): void => {
   core.debug(`Validating inputs…`);
 
