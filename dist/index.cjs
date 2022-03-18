@@ -29970,10 +29970,10 @@ var getFeedImg = async (rssFeed) => {
 };
 
 // src/lib/payload.ts
-import_showdown.default.extension("striptags", function() {
+import_showdown.default.extension("striptags", () => {
   return [{ type: "lang", regex: /<\/?small.?>|<\/?var.?>/gm, replace: "" }];
 });
-var converter = new import_showdown.default.Converter();
+var converter = new import_showdown.default.Converter({ extensions: ["striptags"] });
 var html2txt = (0, import_html_to_text.compile)({
   wordwrap: 120
 });
@@ -29990,10 +29990,10 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<");
+            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/<br\/?>/g, "\n");
           }
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${markdown.replace(/[Rr]ead more/g, "\u2026").replace(/\n/g, " ")}
+          text += `${markdown.replace(/[Rr]ead more/g, "\u2026")}
 `;
         }
         if (item.link)

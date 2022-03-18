@@ -5,11 +5,11 @@ import showdown from 'showdown';
 import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
-showdown.extension('striptags', function () {
+showdown.extension('striptags', () => {
   return [{ type: 'lang', regex: /<\/?small.?>|<\/?var.?>/gm, replace: '' }];
 });
 
-const converter = new showdown.Converter();
+const converter = new showdown.Converter({ extensions: ['striptags'] });
 const html2txt = compile({
   wordwrap: 120
 });
@@ -31,10 +31,13 @@ const genPayload = async (
           const { document } = parseHTML('<div></div>');
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, '>').replace(/&lt;/g, '<');
+            desc = item.description
+              .replace(/&gt;/g, '>')
+              .replace(/&lt;/g, '<')
+              .replace(/<br\/?>/g, '\n');
           }
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
+          text += `${markdown.replace(/[Rr]ead more/g, '…')}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;
       } else {
