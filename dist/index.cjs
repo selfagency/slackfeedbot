@@ -24542,7 +24542,7 @@ var import_rss_to_json = __toESM(require_dist(), 1);
 var getFeed = async (rssFeed, cacheDir, interval) => {
   var _a, _b;
   import_core2.default.debug(`Retrieving ${rssFeed}\u2026`);
-  const rss = await (0, import_rss_to_json.default)(rssFeed, {});
+  const rss = await (0, import_rss_to_json.parse)(rssFeed, {});
   import_core2.default.debug(`Feed has ${(_a = rss == null ? void 0 : rss.items) == null ? void 0 : _a.length} items`);
   if ((_b = rss == null ? void 0 : rss.items) == null ? void 0 : _b.length) {
     let toSend = [];

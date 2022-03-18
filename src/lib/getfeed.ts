@@ -1,6 +1,6 @@
 import core from '@actions/core';
 import dayjs from 'dayjs';
-import parse from 'rss-to-json';
+import { parse } from 'rss-to-json';
 import { RssFeed, RssFeedItem } from '../types.d';
 import { checkCache, readCache } from './cache';
 
