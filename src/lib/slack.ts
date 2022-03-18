@@ -1,7 +1,8 @@
 import core from '@actions/core';
 import fetch from 'node-fetch';
+import { Payload } from '../types';
 
-const slack = async (payload, webhook) => {
+const slack = async (payload: Payload, webhook: string) => {
   const res = await fetch(webhook, {
     method: 'POST',
     body: JSON.stringify(payload),

@@ -11,7 +11,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "parcel build",
+    "build": "tsc --project .",
     "prepare": "husky install",
     "start": "node dist/index.js",
     "watch": "parcel watch"
@@ -24,11 +24,20 @@
   },
   "dependencies": {
     "@actions/core": "^1.6.0",
-    "@babel/core": "^7.17.7",
-    "@babel/eslint-parser": "^7.17.0",
-    "@babel/preset-env": "^7.16.11",
-    "@parcel/babel-preset-env": "^2.3.2",
     "dayjs": "^1.11.0",
+    "html-to-text": "^8.1.0",
+    "linkedom": "^0.14.4",
+    "node-fetch": "^3.2.3",
+    "object-sha": "^2.0.6",
+    "rss-to-json": "^2.0.2",
+    "showdown": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "^8.1.0",
+    "@types/node": "^17.0.21",
+    "@types/showdown": "^1.9.4",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^16.0.3",
@@ -39,16 +48,11 @@
     "eslint-plugin-promise": "^5.2.0",
     "eslint-plugin-yml": "^0.14.0",
     "eslint-scope": "^7.1.1",
-    "html-to-text": "^8.1.0",
     "husky": "^7.0.4",
-    "linkedom": "^0.14.4",
     "lint-staged": "^12.3.6",
-    "node-fetch": "^3.2.3",
-    "object-sha": "^2.0.6",
     "parcel": "^2.3.2",
     "prettier": "^2.6.0",
-    "rss-to-json": "^2.0.2",
-    "showdown": "^2.0.3"
+    "typescript": "^4.6.2"
   },
   "targets": {
     "main": {

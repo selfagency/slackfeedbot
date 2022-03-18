@@ -1,11 +1,9 @@
 import core from '@actions/core';
 import { writeCache } from './lib/cache';
-import { getFeed } from './lib/getfeed.js';
+import { getFeed } from './lib/getfeed';
 import { genPayload } from './lib/payload';
-import { slack } from './lib/slack.js';
-import { validate } from './lib/validate.js';
-
-const { debug, info, setFailed, getInput, getBooleanInput } = core;
+import { slack } from './lib/slack';
+import { validate } from './lib/validate';
 
 const run = async () => {
   try {
@@ -13,15 +11,15 @@ const run = async () => {
     validate();
 
     // parse inputs
-    const slackWebhook = getInput('slack_webhook');
-    const rssFeed = getInput('rss');
-    const cacheDir = getInput('cache_dir');
-    const interval = getInput('interval');
+    const slackWebhook = core.getInput('slack_webhook');
+    const rssFeed = core.getInput('rss');
+    const cacheDir = core.getInput('cache_dir');
+    const interval = core.getInput('interval') ? parseInt(core.getInput('interval')) : undefined;
     let unfurl = false;
     try {
-      unfurl = getBooleanInput('unfurl');
+      unfurl = core.getBooleanInput('unfurl');
     } catch (err) {
-      debug(err.message);
+      core.debug((<Error>err).message);
     }
 
     // get rss feed items
@@ -37,11 +35,11 @@ const run = async () => {
       // cache data
       if (cacheDir) await writeCache(rssFeed, cacheDir, filtered, cached);
     } else {
-      info(`No new items found`);
+      core.info(`No new items found`);
     }
   } catch (err) {
-    debug('Operation failed due to error');
-    setFailed(err.message);
+    core.debug('Operation failed due to error');
+    core.setFailed((<Error>err).message);
   }
 };
 

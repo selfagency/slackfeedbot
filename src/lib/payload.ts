@@ -1,27 +1,31 @@
 import core from '@actions/core';
 import { compile } from 'html-to-text';
-import { DOMParser } from 'linkedom';
-import * as showdown from 'showdown';
+import { parseHTML } from 'linkedom';
+import showdown from 'showdown';
+import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg.js';
 
-const converter = new showdown.default.Converter();
+const converter = new showdown.Converter();
 const html2txt = compile({
   wordwrap: 120
 });
 
-const genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
+const genPayload = async (
+  filtered: RssFeedItem[],
+  unfiltered: RssFeed,
+  rssFeed: string,
+  unfurl: boolean
+): Promise<Payload> => {
   try {
-    const blocks = filtered.map(item => {
+    const blocks: Block[] = filtered.map(item => {
       let text = '';
 
       if (!unfurl) {
         if (item.title) text += `*${html2txt(item.title)}*\n`;
         if (item.description) {
           core.debug(`Item description: ${item.description}`);
-          const markdown = converter.makeMarkdown(
-            item.description,
-            new DOMParser().parseFromString('<div></div>', 'text/html')
-          );
+          const { document } = parseHTML('<div></div>');
+          const markdown = converter.makeMarkdown(item.description, document);
           text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;
@@ -49,7 +53,7 @@ const genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
 
     return payload;
   } catch (err) {
-    core.debug(err.message);
+    core.debug((<Error>err).message);
     throw new Error('Failed to generated Slack payload');
   }
 };

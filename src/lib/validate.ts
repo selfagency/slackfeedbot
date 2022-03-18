@@ -1,6 +1,6 @@
 import core from '@actions/core';
 
-const validate = () => {
+const validate = (): void => {
   core.debug(`Validating inputs…`);
 
   if (!core.getInput('rss') || !core.getInput('rss').startsWith('http')) {
