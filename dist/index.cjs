@@ -24467,6 +24467,7 @@ var checkCache = async (rss, cached) => {
         let cacheHit = false;
         for (const published in cached) {
           const record = new CacheRecord(rss.title, item.title, item.created);
+          import_core.default.debug(`${published} vs. ${cacheSlug(record)}`);
           if (published === cacheSlug(record)) {
             cacheHit = true;
             import_core.default.debug(`Cache hit for ${item.title}`);
