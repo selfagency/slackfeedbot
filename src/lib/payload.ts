@@ -33,11 +33,12 @@ const genPayload = async (
                 .replace(/&gt;/g, '>')
                 .replace(/&lt;/g, '<')
                 .replace(/[Rr]ead more/g, '…'),
-              ['p', 'strong', 'b', 'em', 'i', 'a']
+              ['p', 'strong', 'b', 'em', 'i'],
+              ' '
             );
           }
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${markdown}\n`;
+          text += `${markdown.replace(/\\-/g, '-')}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;
       } else {

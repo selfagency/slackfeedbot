@@ -30132,10 +30132,10 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/[Rr]ead more/g, "\u2026"), ["p", "strong", "b", "em", "i", "a"]);
+            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/[Rr]ead more/g, "\u2026"), ["p", "strong", "b", "em", "i"], " ");
           }
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${markdown}
+          text += `${markdown.replace(/\\-/g, "-")}
 `;
         }
         if (item.link)
