@@ -2,7 +2,6 @@ import core from '@actions/core';
 import fs from 'fs';
 import { promisify } from 'util';
 import type { RssFeed, RssFeedItem } from '../types.d';
-import digest from './sha';
 
 const read = promisify(fs.readFile);
 const write = promisify(fs.writeFile);
@@ -10,14 +9,28 @@ const md = promisify(fs.mkdir);
 
 class CacheRecord {
   [index: string]: string | number | undefined;
+  feedTitle?: string;
   title?: string;
   date?: string | number;
 
-  constructor(title?: string, date?: number | string) {
+  constructor(feedTitle?: string, title?: string, date?: number | string) {
+    this.feedTitle = feedTitle;
     this.title = title;
     this.date = date;
   }
 }
+
+const cacheSlug = (item: CacheRecord): string => {
+  const { feedTitle, title, created } = item;
+  let slug = '';
+  slug += feedTitle?.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  slug += title?.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  if (created) {
+    const date = new Date(created);
+    slug += `${slug}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+  return slug;
+};
 
 const readCache = async (rssFeed: string, cacheDir: string): Promise<string[]> => {
   try {
@@ -43,8 +56,8 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
         let cacheHit = false;
 
         for (const published in cached) {
-          const record = new CacheRecord(item.title, item.created);
-          if (published === (await digest(record))) {
+          const record = new CacheRecord(rss.title, item.title, item.created);
+          if (published === cacheSlug(record)) {
             cacheHit = true;
             core.debug(`Cache hit for ${item.title}`);
           }
@@ -66,6 +79,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
 };
 
 const writeCache = async (
+  feedTitle: string,
   rssFeed: string,
   cacheDir: string,
   filtered: RssFeedItem[],
@@ -81,8 +95,8 @@ const writeCache = async (
 
     const hashed = [...cached];
     for (const sent of filtered) {
-      const record = new CacheRecord(sent.title, sent.created);
-      hashed.push(await digest(record));
+      const record = new CacheRecord(feedTitle, sent.title, sent.created);
+      hashed.push(cacheSlug(record));
     }
 
     await write(cachePath, JSON.stringify(hashed));

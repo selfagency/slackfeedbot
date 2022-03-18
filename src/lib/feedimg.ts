@@ -17,7 +17,9 @@ const getFeedImg = async (rssFeed: string): Promise<string | undefined> => {
     core.debug(`Icons: ${JSON.stringify(icons)}`);
 
     if (icons?.icons) {
-      favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src;
+      favicon =
+        icons.icons.find(i => i?.sizes === '180x180' || i?.sizes === '144x144' || i?.sizes === '72x72')?.src ||
+        icons.icons[0]?.src;
       core.debug(`Favicon: ${favicon}`);
     }
   } catch (err) {

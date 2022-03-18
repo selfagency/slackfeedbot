@@ -1577,7 +1577,7 @@ var require_utils2 = __commonJS({
     function isNumber(val) {
       return typeof val === "number";
     }
-    function isObject2(val) {
+    function isObject(val) {
       return val !== null && typeof val === "object";
     }
     function isPlainObject(val) {
@@ -1600,7 +1600,7 @@ var require_utils2 = __commonJS({
       return toString2.call(val) === "[object Function]";
     }
     function isStream(val) {
-      return isObject2(val) && isFunction(val.pipe);
+      return isObject(val) && isFunction(val.pipe);
     }
     function isURLSearchParams(val) {
       return typeof URLSearchParams !== "undefined" && val instanceof URLSearchParams;
@@ -1675,7 +1675,7 @@ var require_utils2 = __commonJS({
       isArrayBufferView,
       isString,
       isNumber,
-      isObject: isObject2,
+      isObject,
       isPlainObject,
       isUndefined,
       isDate,
@@ -6500,7 +6500,7 @@ var require_moo = __commonJS({
       function isRegExp(o) {
         return o && toString2.call(o) === "[object RegExp]";
       }
-      function isObject2(o) {
+      function isObject(o) {
         return o && typeof o === "object" && !isRegExp(o) && !Array.isArray(o);
       }
       function reEscape(s2) {
@@ -6553,7 +6553,7 @@ var require_moo = __commonJS({
           }
           var match = [];
           rules.forEach(function(rule) {
-            if (isObject2(rule)) {
+            if (isObject(rule)) {
               if (match.length)
                 result.push(ruleOptions(key2, match));
               result.push(ruleOptions(key2, rule));
@@ -6586,7 +6586,7 @@ var require_moo = __commonJS({
         return result;
       }
       function ruleOptions(type, obj) {
-        if (!isObject2(obj)) {
+        if (!isObject(obj)) {
           obj = { match: obj };
         }
         if (obj.include) {
@@ -20306,11 +20306,11 @@ var require_ponyfill_es2018 = __commonJS({
           throw new TypeError(`${context} is not a function.`);
         }
       }
-      function isObject2(x2) {
+      function isObject(x2) {
         return typeof x2 === "object" && x2 !== null || typeof x2 === "function";
       }
       function assertObject(x2, context) {
-        if (!isObject2(x2)) {
+        if (!isObject(x2)) {
           throw new TypeError(`${context} is not an object.`);
         }
       }
@@ -24425,57 +24425,26 @@ var import_core7 = __toESM(require_core(), 1);
 var import_core = __toESM(require_core(), 1);
 var import_fs = __toESM(require("fs"), 1);
 var import_util = require("util");
-
-// src/lib/sha.ts
-var isObject = (val) => {
-  return val != null && typeof val === "object" && !Array.isArray(val);
-};
-var objectToArraySortedByKey = (obj) => {
-  if (!isObject(obj) && !Array.isArray(obj)) {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map((item) => {
-      if (Array.isArray(item) || isObject(item)) {
-        return objectToArraySortedByKey(item);
-      }
-      return item;
-    });
-  }
-  return Object.keys(obj).sort().map((key2) => {
-    return [key2, objectToArraySortedByKey(obj[key2])];
-  });
-};
-var hashable = (obj) => {
-  return JSON.stringify(objectToArraySortedByKey(obj));
-};
-var digest = (obj, algorithm = "SHA-256") => {
-  const algorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
-  if (!algorithms.includes(algorithm)) {
-    throw RangeError(`Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`);
-  }
-  return (async (obj2, algorithm2) => {
-    const encoder = new TextEncoder();
-    const hashInput = encoder.encode(hashable(obj2)).buffer;
-    let digest2 = "";
-    {
-      const nodeAlg = algorithm2.toLowerCase().replace("-", "");
-      digest2 = require("crypto").createHash(nodeAlg).update(Buffer.from(hashInput)).digest("hex");
-    }
-    return digest2;
-  })(obj, algorithm);
-};
-var sha_default = digest;
-
-// src/lib/cache.ts
 var read = (0, import_util.promisify)(import_fs.default.readFile);
 var write = (0, import_util.promisify)(import_fs.default.writeFile);
 var md = (0, import_util.promisify)(import_fs.default.mkdir);
 var CacheRecord = class {
-  constructor(title, date) {
+  constructor(feedTitle, title, date) {
+    this.feedTitle = feedTitle;
     this.title = title;
     this.date = date;
   }
+};
+var cacheSlug = (item) => {
+  const { feedTitle, title, created } = item;
+  let slug = "";
+  slug += feedTitle == null ? void 0 : feedTitle.toLowerCase().replace(/[^a-z0-9]/g, "-");
+  slug += title == null ? void 0 : title.toLowerCase().replace(/[^a-z0-9]/g, "-");
+  if (created) {
+    const date = new Date(created);
+    slug += `${slug}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+  return slug;
 };
 var readCache = async (rssFeed, cacheDir) => {
   try {
@@ -24497,8 +24466,8 @@ var checkCache = async (rss, cached) => {
       for (const item of rss.items) {
         let cacheHit = false;
         for (const published in cached) {
-          const record = new CacheRecord(item.title, item.created);
-          if (published === await sha_default(record)) {
+          const record = new CacheRecord(rss.title, item.title, item.created);
+          if (published === cacheSlug(record)) {
             cacheHit = true;
             import_core.default.debug(`Cache hit for ${item.title}`);
           }
@@ -24517,7 +24486,7 @@ var checkCache = async (rss, cached) => {
     throw new Error("Error checking cache");
   }
 };
-var writeCache = async (rssFeed, cacheDir, filtered, cached) => {
+var writeCache = async (feedTitle, rssFeed, cacheDir, filtered, cached) => {
   try {
     const rssFeedUrl = new URL(rssFeed);
     const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, "_")}.json`;
@@ -24525,8 +24494,8 @@ var writeCache = async (rssFeed, cacheDir, filtered, cached) => {
     await md(cacheDir, { recursive: true });
     const hashed = [...cached];
     for (const sent of filtered) {
-      const record = new CacheRecord(sent.title, sent.created);
-      hashed.push(await sha_default(record));
+      const record = new CacheRecord(feedTitle, sent.title, sent.created);
+      hashed.push(cacheSlug(record));
     }
     await write(cachePath, JSON.stringify(hashed));
   } catch (err) {
@@ -29959,7 +29928,7 @@ var getFeedImg = async (rssFeed) => {
     const icons = await (await fetch(`https:/favicongrabber.com/api/grab/${host}`)).json();
     import_core3.default.debug(`Icons: ${JSON.stringify(icons)}`);
     if (icons == null ? void 0 : icons.icons) {
-      favicon = ((_a = icons.icons.find((i2) => (i2 == null ? void 0 : i2.sizes) === "144x144")) == null ? void 0 : _a.src) || ((_b = icons.icons[0]) == null ? void 0 : _b.src);
+      favicon = ((_a = icons.icons.find((i2) => (i2 == null ? void 0 : i2.sizes) === "180x180" || (i2 == null ? void 0 : i2.sizes) === "144x144" || (i2 == null ? void 0 : i2.sizes) === "72x72")) == null ? void 0 : _a.src) || ((_b = icons.icons[0]) == null ? void 0 : _b.src);
       import_core3.default.debug(`Favicon: ${favicon}`);
     }
   } catch (err) {
@@ -29983,7 +29952,6 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           text += `*${html2txt(item.title)}*
 `;
         if (item.description) {
-          import_core4.default.debug(`Item description: ${item.description}`);
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
@@ -30001,7 +29969,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
       }
       return {
         type: "section",
-        fields: {
+        text: {
           type: "mrkdwn",
           text
         }
@@ -30073,7 +30041,7 @@ var run = async () => {
       const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
       await slack(payload, slackWebhook);
       if (cacheDir)
-        await writeCache(rssFeed, cacheDir, filtered, cached);
+        await writeCache((unfiltered == null ? void 0 : unfiltered.title) || "", rssFeed, cacheDir, filtered, cached);
     } else {
       import_core7.default.info(`No new items found`);
     }

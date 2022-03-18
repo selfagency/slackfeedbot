@@ -23,7 +23,7 @@ const genPayload = async (
       if (!unfurl) {
         if (item.title) text += `*${html2txt(item.title)}*\n`;
         if (item.description) {
-          core.debug(`Item description: ${item.description}`);
+          // core.debug(`Item description: ${item.description}`);
           const { document } = parseHTML('<div></div>');
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
@@ -43,7 +43,7 @@ const genPayload = async (
 
       return {
         type: 'section',
-        fields: {
+        text: {
           type: 'mrkdwn',
           text
         }

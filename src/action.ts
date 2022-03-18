@@ -33,7 +33,7 @@ const run = async () => {
       await slack(payload, slackWebhook);
 
       // cache data
-      if (cacheDir) await writeCache(rssFeed, cacheDir, filtered, cached);
+      if (cacheDir) await writeCache(unfiltered?.title || '', rssFeed, cacheDir, filtered, cached);
     } else {
       core.info(`No new items found`);
     }
