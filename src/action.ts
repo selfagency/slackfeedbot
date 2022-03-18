@@ -14,11 +14,11 @@ const run = async () => {
     const slackWebhook = core.getInput('slack_webhook');
     const rssFeed = core.getInput('rss');
     const cacheDir = core.getInput('cache_dir');
-    const interval = core.getInput('interval') ? parseInt(core.getInput('interval')) : undefined;
-    const unfurl = core.getInput('unfurl') ? core.getBooleanInput('unfurl') : false;
-    const showDesc = core.getInput('show_desc') ? core.getBooleanInput('show_desc') : true;
-    const showLink = core.getInput('show_link') ? core.getBooleanInput('show_link') : true;
-    const showDate = core.getInput('show_date') ? core.getBooleanInput('show_date') : true;
+    const interval = core.getInput('interval').length > 0 ? parseInt(core.getInput('interval')) : undefined;
+    const unfurl = core.getInput('unfurl').length > 0 ? core.getBooleanInput('unfurl') : false;
+    const showDesc = core.getInput('show_desc').length > 0 ? core.getBooleanInput('show_desc') : true;
+    const showLink = core.getInput('show_link').length > 0 ? core.getBooleanInput('show_link') : true;
+    const showDate = core.getInput('show_date').length > 0 ? core.getBooleanInput('show_date') : true;
 
     // Get RSS feed items
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
