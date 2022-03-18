@@ -20,11 +20,13 @@ const getFeed = async (
       core.debug(`Retrieving previously cached entries…`);
       try {
         cached = await readCache(rssFeed, cacheDir);
-        toSend = await checkCache(rss, cached);
+        toSend = (await checkCache(rss, cached)).filter(item => {
+          return dayjs(item.created).isAfter(dayjs().subtract(1, 'day'));
+        });
       } catch (err) {
         core.debug((<Error>err).message);
         toSend = rss.items.filter(item => {
-          return dayjs(item.created).isAfter(dayjs().subtract(60, 'minute'));
+          return dayjs(item.created).isAfter(dayjs().subtract(1, 'day'));
         });
       }
     } else if (interval) {

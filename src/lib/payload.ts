@@ -33,7 +33,7 @@ const genPayload = async (
               item.description
                 .replace(/&gt;/g, '>')
                 .replace(/&lt;/g, '<')
-                .replace(/[Rr]ead more/g, '…'),
+                .replace(/Read more/g, '…'),
               ['p', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li'],
               ' '
             );
@@ -41,8 +41,6 @@ const genPayload = async (
           const markdown = converter.makeMarkdown(desc, document);
           text += `${markdown.replace(/\\-/g, '-')}\n`;
         }
-      } else {
-        if (item.link) text += `<${item.link}|Read more>`;
       }
 
       if (item?.title) {
@@ -52,23 +50,39 @@ const genPayload = async (
         });
       }
 
-      blocks.push({
-        type: 'section',
-        fields: [
-          {
-            type: 'mrkdwn',
-            text: dayjs(item?.created)?.format('MMM D @ h:mma')
-          },
-          {
-            type: 'mrkdwn',
-            text
-          },
-          {
+      if (unfurl) {
+        blocks.push({
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: dayjs(item?.created)?.format('MMM D @ h:mma')
+            }
+          ],
+          text: {
             type: 'mrkdwn',
             text: `<${item?.link}|Read more>`
           }
-        ]
-      });
+        });
+      } else {
+        blocks.push({
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: dayjs(item?.created)?.format('MMM D @ h:mma')
+            },
+            {
+              type: 'mrkdwn',
+              text: `<${item?.link}|Read more>`
+            }
+          ],
+          text: {
+            type: 'mrkdwn',
+            text
+          }
+        });
+      }
     });
 
     const payload = {

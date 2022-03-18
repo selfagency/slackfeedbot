@@ -24696,11 +24696,13 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
       import_core2.default.debug(`Retrieving previously cached entries\u2026`);
       try {
         cached = await readCache(rssFeed, cacheDir);
-        toSend = await checkCache(rss, cached);
+        toSend = (await checkCache(rss, cached)).filter((item) => {
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "day"));
+        });
       } catch (err) {
         import_core2.default.debug(err.message);
         toSend = rss.items.filter((item) => {
-          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(60, "minute"));
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "day"));
         });
       }
     } else if (interval) {
@@ -30125,22 +30127,19 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
   try {
     const blocks = [];
     filtered.forEach((item) => {
-      var _a;
+      var _a, _b;
       let text = "";
       if (!unfurl) {
         if (item.description) {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/[Rr]ead more/g, "\u2026"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
+            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/Read more/g, "\u2026"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${markdown.replace(/\\-/g, "-")}
 `;
         }
-      } else {
-        if (item.link)
-          text += `<${item.link}|Read more>`;
       }
       if (item == null ? void 0 : item.title) {
         blocks.push({
@@ -30148,23 +30147,39 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           text: { type: "plain_text", text: html2txt(item == null ? void 0 : item.title) }
         });
       }
-      blocks.push({
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: (_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")
-          },
-          {
-            type: "mrkdwn",
-            text
-          },
-          {
+      if (unfurl) {
+        blocks.push({
+          type: "section",
+          fields: [
+            {
+              type: "mrkdwn",
+              text: (_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")
+            }
+          ],
+          text: {
             type: "mrkdwn",
             text: `<${item == null ? void 0 : item.link}|Read more>`
           }
-        ]
-      });
+        });
+      } else {
+        blocks.push({
+          type: "section",
+          fields: [
+            {
+              type: "mrkdwn",
+              text: (_b = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _b.format("MMM D @ h:mma")
+            },
+            {
+              type: "mrkdwn",
+              text: `<${item == null ? void 0 : item.link}|Read more>`
+            }
+          ],
+          text: {
+            type: "mrkdwn",
+            text
+          }
+        });
+      }
     });
     const payload = {
       as_user: false,
