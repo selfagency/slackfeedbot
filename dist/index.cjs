@@ -30125,32 +30125,33 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
     const blocks = filtered.map((item) => {
       let text = "";
       if (!unfurl) {
-        if (item.title)
-          text += `*${html2txt(item.title)}*
-`;
         if (item.description) {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/[Rr]ead more/g, "\u2026"), ["p", "strong", "b", "em", "i"], " ");
+            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/[Rr]ead more/g, "\u2026"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${markdown.replace(/\\-/g, "-")}
 `;
         }
+      } else {
         if (item.link)
           text += `<${item.link}|Read more>`;
-      } else {
-        if (item.title)
-          text += `<${item.link}|${html2txt(item.title + item.created)}>`;
       }
-      return {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text
+      return [
+        (item == null ? void 0 : item.title) ? {
+          type: "header",
+          text: { type: "plain_text", text: html2txt(item == null ? void 0 : item.title) }
+        } : null,
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text
+          }
         }
-      };
+      ];
     });
     const payload = {
       as_user: false,

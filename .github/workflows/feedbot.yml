@@ -17,8 +17,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./slackfeedbot-cache
-          key: feed-cache-g-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: feed-cache-g-
+          key: feed-cache-h-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-h-
       - name: LAT
         uses: 'selfagency/slackfeedbot@dev'
         with:

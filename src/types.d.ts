@@ -32,10 +32,11 @@ interface Icons {
 
 interface Block {
   type?: string;
-  text?: {
-    type?: string;
-    text?: string;
-  };
+  text?: string | Block;
+}
+
+interface BlockOfBlocks {
+  [index?: number]: Block | null;
 }
 
 /* eslint-disable camelcase */
@@ -45,8 +46,8 @@ interface Payload {
   icon_url?: string;
   unfurl_links?: boolean;
   unfurl_media?: boolean;
-  blocks?: Block[];
+  blocks?: BlockOfBlocks[];
 }
 /* eslint-enable camelcase */
 
-export { RssFeed, RssFeedItem, Icons, Icon, Payload, Block };
+export { RssFeed, RssFeedItem, Icons, Icon, Payload, Block, BlockOfBlocks };

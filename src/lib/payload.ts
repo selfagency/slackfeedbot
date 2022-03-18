@@ -3,7 +3,7 @@ import { compile } from 'html-to-text';
 import { parseHTML } from 'linkedom';
 import showdown from 'showdown';
 import striptags from 'striptags';
-import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
+import type { BlockOfBlocks, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
 const converter = new showdown.Converter();
@@ -18,11 +18,10 @@ const genPayload = async (
   unfurl: boolean
 ): Promise<Payload> => {
   try {
-    const blocks: Block[] = filtered.map(item => {
+    const blocks: BlockOfBlocks[] = filtered.map(item => {
       let text = '';
 
       if (!unfurl) {
-        if (item.title) text += `*${html2txt(item.title)}*\n`;
         if (item.description) {
           // core.debug(`Item description: ${item.description}`);
           const { document } = parseHTML('<div></div>');
@@ -33,25 +32,32 @@ const genPayload = async (
                 .replace(/&gt;/g, '>')
                 .replace(/&lt;/g, '<')
                 .replace(/[Rr]ead more/g, '…'),
-              ['p', 'strong', 'b', 'em', 'i'],
+              ['p', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li'],
               ' '
             );
           }
           const markdown = converter.makeMarkdown(desc, document);
           text += `${markdown.replace(/\\-/g, '-')}\n`;
         }
-        if (item.link) text += `<${item.link}|Read more>`;
       } else {
-        if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
+        if (item.link) text += `<${item.link}|Read more>`;
       }
 
-      return {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text
+      return [
+        item?.title
+          ? {
+              type: 'header',
+              text: { type: 'plain_text', text: html2txt(item?.title) }
+            }
+          : null,
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text
+          }
         }
-      };
+      ];
     });
 
     const payload = {
