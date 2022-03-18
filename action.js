@@ -1,84 +1,22 @@
 import core from '@actions/core';
-import dayjs from 'dayjs';
-import { mkdir, readFile, writeFile } from 'fs';
-import { compile } from 'html-to-text';
-import { JSDOM } from 'jsdom';
-import fetch from 'node-fetch';
-import * as objectSha from 'object-sha';
-import { parse } from 'rss-to-json';
-import { Converter } from 'showdown';
-import { promisify } from 'util';
+import { writeCache } from './lib/cache';
+import { getFeed } from './lib/getfeed.js';
+import { genPayload } from './lib/payload';
+import { slack } from './lib/slack.js';
+import { validate } from './lib/validate.js';
 
-const read = promisify(readFile);
-const write = promisify(writeFile);
-const md = promisify(mkdir);
-const { debug, setFailed, getInput, getBooleanInput } = core;
-const converter = new Converter();
-const dom = new JSDOM();
-const html2txt = compile({
-  wordwrap: 120
-});
-
-const hash = async obj => {
-  const toHash = objectSha.hashable(obj);
-  const hashed = await objectSha.digest(toHash);
-  return hashed;
-};
-
-const validate = () => {
-  if (!getInput('rss') || !getInput('rss').startsWith('http')) {
-    throw new Error('No feed or invalid feed specified');
-  }
-
-  if (!getInput('slack_webhook') || !getInput('slack_webhook').startsWith('https')) {
-    throw new Error('No Slack webhook or invalid webhook specified');
-  }
-
-  if (!getInput('interval') && !getInput('cache_dir')) {
-    throw new Error('No interval or cache folder specified');
-  }
-
-  if (getInput('interval') && parseInt(getInput('interval')).toString() === 'NaN') {
-    throw new Error('Invalid interval specified');
-  }
-};
-
-const getFeedImg = async rssFeed => {
-  const url = new URL(rssFeed);
-  const host = url.hostname
-    .replace('//status.', '//')
-    .replace('//feed.', '//')
-    .replace('//feeds.', '//')
-    .replace('//rss.', '//');
-  debug(`Getting favicons for ${host}`);
-
-  let favicon;
-  try {
-    let icons = await fetch(`https:/favicongrabber.com/api/grab/${host}`);
-    icons = await icons.json();
-    debug(`Icons: ${JSON.stringify(icons)}`);
-    favicon = icons.icons.find(i => i?.sizes === '144x144')?.src || icons.icons[0]?.src;
-    debug(`Favicon: ${favicon}`);
-  } catch (err) {
-    debug(err.message);
-    favicon = undefined;
-  }
-
-  return favicon;
-};
+const { debug, info, setFailed, getInput, getBooleanInput } = core;
 
 const run = async () => {
   try {
-    debug(`Validating inputs…`);
+    // validate inputs
     validate();
 
-    const rssFeed = getInput('rss');
-    const rssFeedUrl = new URL(rssFeed);
+    // parse inputs
     const slackWebhook = getInput('slack_webhook');
-    const interval = parseInt(getInput('interval'));
+    const rssFeed = getInput('rss');
     const cacheDir = getInput('cache_dir');
-    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
-
+    const interval = getInput('interval');
     let unfurl = false;
     try {
       unfurl = getBooleanInput('unfurl');
@@ -86,112 +24,24 @@ const run = async () => {
       debug(err.message);
     }
 
-    debug(`Retrieving ${rssFeed}…`);
-    const rss = await parse(rssFeed);
-    // debug(rss);
+    // get rss feed items
+    const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
 
-    debug('Checking for feed items…');
-    if (rss?.items?.length) {
-      let toSend = [];
-      let published = [];
-      if (cacheDir) {
-        debug(`Retrieving previously published entries…`);
-        try {
-          published = JSON.parse(await read(cachePath, 'utf8'));
-          // debug(published);
+    if (filtered.length) {
+      // generate payload
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
 
-          for (const item in rss.items) {
-            let cacheHit = false;
-            for (const pubbed in published) {
-              if (pubbed === (await hash({ title: item.title, date: item.created }))) {
-                cacheHit = true;
-              }
-            }
-            if (!cacheHit) toSend.push(item);
-          }
-        } catch (err) {
-          debug(err.message);
-          toSend = rss.items.filter(item => {
-            return dayjs(item.created).isAfter(dayjs().subtract(60, 'minute'));
-          });
-        }
-      } else {
-        debug(`Selecting items posted in the last ${interval} minutes…`);
-        toSend = rss.items.filter(item => {
-          return dayjs(item.created).isAfter(dayjs().subtract(interval, 'minute'));
-        });
-      }
+      // send payload to slack
+      await slack(payload, slackWebhook);
 
-      const blocks = toSend.map(item => {
-        let text = '';
-
-        if (!unfurl) {
-          if (item.title) text += `*${html2txt(item.title)}*\n`;
-          if (item.description) {
-            debug(`Item description: ${item.description}`);
-            const markdown = converter.makeMarkdown(item.description, dom.window.document);
-            text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
-          }
-          if (item.link) text += `<${item.link}|Read more>`;
-        } else {
-          if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
-        }
-
-        return {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text
-          }
-        };
-      });
-      // debug(blocks);
-
-      debug(`Sending ${toSend.length} item(s)…`);
-      if (toSend.length > 0) {
-        const payload = {
-          as_user: false,
-          username: rss.title ? html2txt(rss.title) : 'FeedBot',
-          icon_url: await getFeedImg(rssFeed),
-          unfurl_links: unfurl,
-          unfurl_media: unfurl,
-          blocks
-        };
-        debug(`Slack payload: ${JSON.stringify(payload)}`);
-
-        const res = await fetch(slackWebhook, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            Accept: 'application/json'
-          }
-        });
-        debug(`Slack response: ${await res.text()}`);
-
-        if (cacheDir) {
-          debug(`Writing cache to ${cachePath}`);
-          try {
-            await md(cacheDir, { recursive: true });
-          } catch (err) {
-            debug(err.message);
-          }
-
-          const hashed = [...published];
-          for (const sent of toSend) {
-            hashed.push(await hash({ title: sent.title, date: sent.created }));
-          }
-
-          await write(cachePath, JSON.stringify(hashed));
-        }
-      }
+      // cache data
+      if (cacheDir) await writeCache(rssFeed, cacheDir, filtered, cached);
     } else {
-      throw new Error('No feed items found');
+      info(`No new items found`);
     }
   } catch (err) {
     debug('Operation failed due to error');
     setFailed(err.message);
-    process.exit(1);
   }
 };
 

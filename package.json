@@ -1,18 +1,20 @@
 {
   "name": "slackfeedbot",
   "version": "1.2.5",
-  "license": "MIT",
-  "author": "Daniel Sieradski <daniel@self.agency>",
   "description": "Push RSS feed updates to Slack via GitHub Actions",
   "repository": {
     "type": "git",
     "url": "https://github.com/selfagency/slackfeedbot.git"
   },
+  "license": "MIT",
+  "author": "Daniel Sieradski <daniel@self.agency>",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build action.js --license licenses.txt",
-    "prepare": "husky install"
+    "build": "parcel build",
+    "prepare": "husky install",
+    "start": "node dist/index.js",
+    "watch": "parcel watch"
   },
   "lint-staged": {
     "*.{js,json,md,yml}": [
@@ -20,13 +22,11 @@
       "prettier --write"
     ]
   },
-  "devDependencies": {
+  "dependencies": {
     "@actions/core": "^1.6.0",
-    "@actions/github": "^5.0.0",
     "@babel/core": "^7.17.7",
     "@babel/eslint-parser": "^7.17.0",
-    "@vercel/ncc": "^0.33.3",
-    "babel-preset-env": "^1.7.0",
+    "@babel/preset-env": "^7.16.11",
     "dayjs": "^1.11.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",
@@ -40,12 +40,29 @@
     "eslint-scope": "^7.1.1",
     "html-to-text": "^8.1.0",
     "husky": "^7.0.4",
-    "jsdom": "^19.0.0",
+    "linkedom": "^0.14.4",
     "lint-staged": "^12.3.6",
     "node-fetch": "^3.2.3",
     "object-sha": "^2.0.6",
+    "parcel": "^2.3.2",
     "prettier": "^2.6.0",
     "rss-to-json": "^2.0.2",
     "showdown": "^2.0.3"
+  },
+  "targets": {
+    "main": {
+      "context": "node",
+      "includeNodeModules": true,
+      "engines": {
+        "node": "16.x.x"
+      },
+      "isLibrary": true,
+      "optimize": true,
+      "sourceMap": {
+        "inline": true,
+        "inlineSources": true
+      },
+      "source": "action.js"
+    }
   }
 }
