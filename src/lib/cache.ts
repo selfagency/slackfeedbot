@@ -57,8 +57,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
 
         for (const published in cached) {
           const record = new CacheRecord(rss.title, item.title, item.created);
-          core.debug(`${published} vs. ${cacheSlug(record)}`);
-          if (published === cacheSlug(record)) {
+          if (cached[published] === cacheSlug(record)) {
             cacheHit = true;
             core.debug(`Cache hit for ${item.title}`);
           }
