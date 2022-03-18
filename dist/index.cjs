@@ -29987,7 +29987,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/<br\/?>/g, "\n");
+            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/<br\/?>/g, "\n").replace(/\\-/g, "-");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${html2txt(markdown).replace(/[Rr]ead more/g, "\u2026")}
@@ -30001,7 +30001,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
       }
       return {
         type: "section",
-        text: {
+        fields: {
           type: "mrkdwn",
           text
         }

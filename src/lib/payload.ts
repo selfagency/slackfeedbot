@@ -30,7 +30,8 @@ const genPayload = async (
             desc = item.description
               .replace(/&gt;/g, '>')
               .replace(/&lt;/g, '<')
-              .replace(/<br\/?>/g, '\n');
+              .replace(/<br\/?>/g, '\n')
+              .replace(/\\-/g, '-');
           }
           const markdown = converter.makeMarkdown(desc, document);
           text += `${html2txt(markdown).replace(/[Rr]ead more/g, '…')}\n`;
@@ -42,7 +43,7 @@ const genPayload = async (
 
       return {
         type: 'section',
-        text: {
+        fields: {
           type: 'mrkdwn',
           text
         }
