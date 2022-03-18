@@ -25,7 +25,11 @@ const genPayload = async (
         if (item.description) {
           core.debug(`Item description: ${item.description}`);
           const { document } = parseHTML('<div></div>');
-          const markdown = converter.makeMarkdown(item.description, document);
+          let desc = item.description;
+          if (/&gt;.+&lt;/.test(item.description)) {
+            desc = html2txt(item.description);
+          }
+          const markdown = converter.makeMarkdown(desc, document);
           text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;

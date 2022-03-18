@@ -29985,7 +29985,11 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
         if (item.description) {
           import_core4.default.debug(`Item description: ${item.description}`);
           const { document: document2 } = parseHTML("<div></div>");
-          const markdown = converter.makeMarkdown(item.description, document2);
+          let desc = item.description;
+          if (/&gt;.+&lt;/.test(item.description)) {
+            desc = html2txt(item.description);
+          }
+          const markdown = converter.makeMarkdown(desc, document2);
           text += `${markdown.replace(/[Rr]ead more/g, "\u2026").replace(/\n/g, " ")}
 `;
         }
