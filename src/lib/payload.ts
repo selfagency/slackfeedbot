@@ -27,17 +27,11 @@ const genPayload = async (
         if (item.description) {
           // core.debug(`Item description: ${item.description}`);
           const { document } = parseHTML('<div></div>');
-          let desc = item.description;
-          if (/&gt;.+&lt;/.test(item.description)) {
-            desc = striptags(
-              item.description
-                .replace(/&gt;/g, '>')
-                .replace(/&lt;/g, '<')
-                .replace(/Read more/g, '…'),
-              ['p', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li'],
-              ' '
-            );
-          }
+          const desc = striptags(
+            item.description.replace(/&gt;/g, '>').replace(/&lt;/g, '<'),
+            ['p', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li'],
+            ' '
+          );
           const markdown = converter.makeMarkdown(desc, document);
           text += `${markdown.replace(/\\-/g, '-')}\n`;
         }
@@ -70,16 +64,16 @@ const genPayload = async (
           fields: [
             {
               type: 'mrkdwn',
-              text: dayjs(item?.created)?.format('MMM D @ h:mma')
+              text: `<${item?.link}|Read more>`
             },
             {
               type: 'mrkdwn',
-              text: `<${item?.link}|Read more>`
+              text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}`
             }
           ],
           text: {
             type: 'mrkdwn',
-            text
+            text: text.replace(/Read more/g, '…')
           }
         });
       }

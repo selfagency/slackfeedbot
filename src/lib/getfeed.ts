@@ -21,12 +21,12 @@ const getFeed = async (
       try {
         cached = await readCache(rssFeed, cacheDir);
         toSend = (await checkCache(rss, cached)).filter(item => {
-          return dayjs(item.created).isAfter(dayjs().subtract(1, 'day'));
+          return dayjs(item.created).isAfter(dayjs().subtract(1, 'hour'));
         });
       } catch (err) {
         core.debug((<Error>err).message);
         toSend = rss.items.filter(item => {
-          return dayjs(item.created).isAfter(dayjs().subtract(1, 'day'));
+          return dayjs(item.created).isAfter(dayjs().subtract(1, 'hour'));
         });
       }
     } else if (interval) {

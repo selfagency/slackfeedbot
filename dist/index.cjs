@@ -24697,12 +24697,12 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
       try {
         cached = await readCache(rssFeed, cacheDir);
         toSend = (await checkCache(rss, cached)).filter((item) => {
-          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "day"));
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"));
         });
       } catch (err) {
         import_core2.default.debug(err.message);
         toSend = rss.items.filter((item) => {
-          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "day"));
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"));
         });
       }
     } else if (interval) {
@@ -30132,10 +30132,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
       if (!unfurl) {
         if (item.description) {
           const { document: document2 } = parseHTML("<div></div>");
-          let desc = item.description;
-          if (/&gt;.+&lt;/.test(item.description)) {
-            desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/Read more/g, "\u2026"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
-          }
+          const desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${markdown.replace(/\\-/g, "-")}
 `;
@@ -30167,16 +30164,16 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           fields: [
             {
               type: "mrkdwn",
-              text: (_b = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _b.format("MMM D @ h:mma")
+              text: `<${item == null ? void 0 : item.link}|Read more>`
             },
             {
               type: "mrkdwn",
-              text: `<${item == null ? void 0 : item.link}|Read more>`
+              text: `Published ${(_b = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _b.format("MMM D @ h:mma")}`
             }
           ],
           text: {
             type: "mrkdwn",
-            text
+            text: text.replace(/Read more/g, "\u2026")
           }
         });
       }
