@@ -24717,6 +24717,7 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
 
 // src/lib/payload.ts
 var import_core4 = __toESM(require_core(), 1);
+var import_dayjs2 = __toESM(require_dayjs_min(), 1);
 var import_html_to_text = __toESM(require_html_to_text2(), 1);
 
 // node_modules/linkedom/esm/shared/symbols.js
@@ -30122,7 +30123,9 @@ var html2txt = (0, import_html_to_text.compile)({
 });
 var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
   try {
-    const blocks = filtered.map((item) => {
+    const blocks = [];
+    filtered.forEach((item) => {
+      var _a;
       let text = "";
       if (!unfurl) {
         if (item.description) {
@@ -30139,19 +30142,29 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
         if (item.link)
           text += `<${item.link}|Read more>`;
       }
-      return [
-        (item == null ? void 0 : item.title) ? {
+      if (item == null ? void 0 : item.title) {
+        blocks.push({
           type: "header",
           text: { type: "plain_text", text: html2txt(item == null ? void 0 : item.title) }
-        } : null,
-        {
-          type: "section",
-          text: {
+        });
+      }
+      blocks.push({
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: (_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")
+          },
+          {
             type: "mrkdwn",
             text
+          },
+          {
+            type: "mrkdwn",
+            text: `<${item == null ? void 0 : item.link}|Read more>`
           }
-        }
-      ];
+        ]
+      });
     });
     const payload = {
       as_user: false,

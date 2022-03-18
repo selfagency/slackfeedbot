@@ -1,9 +1,10 @@
 import core from '@actions/core';
+import dayjs from 'dayjs';
 import { compile } from 'html-to-text';
 import { parseHTML } from 'linkedom';
 import showdown from 'showdown';
 import striptags from 'striptags';
-import type { BlockOfBlocks, Payload, RssFeed, RssFeedItem } from '../types.d';
+import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
 const converter = new showdown.Converter();
@@ -18,7 +19,8 @@ const genPayload = async (
   unfurl: boolean
 ): Promise<Payload> => {
   try {
-    const blocks: BlockOfBlocks[] = filtered.map(item => {
+    const blocks: Block[] = [];
+    filtered.forEach(item => {
       let text = '';
 
       if (!unfurl) {
@@ -43,21 +45,30 @@ const genPayload = async (
         if (item.link) text += `<${item.link}|Read more>`;
       }
 
-      return [
-        item?.title
-          ? {
-              type: 'header',
-              text: { type: 'plain_text', text: html2txt(item?.title) }
-            }
-          : null,
-        {
-          type: 'section',
-          text: {
+      if (item?.title) {
+        blocks.push({
+          type: 'header',
+          text: { type: 'plain_text', text: html2txt(item?.title) }
+        });
+      }
+
+      blocks.push({
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: dayjs(item?.created)?.format('MMM D @ h:mma')
+          },
+          {
             type: 'mrkdwn',
             text
+          },
+          {
+            type: 'mrkdwn',
+            text: `<${item?.link}|Read more>`
           }
-        }
-      ];
+        ]
+      });
     });
 
     const payload = {
