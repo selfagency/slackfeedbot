@@ -32,16 +32,12 @@ const genPayload = async (
               item.description
                 .replace(/&gt;/g, '>')
                 .replace(/&lt;/g, '<')
-                .replace(/\n/g, ' ')
-                .replace(/<br\/?>/g, ' ')
-                .replace(/\\\\/g, '')
-                .replace(/[Rr]ead more/g, '…')
-                .replace(/\.\s+/g, '.\n'),
-              ['strong', 'b', 'em', 'i', 'a']
+                .replace(/[Rr]ead more/g, '…'),
+              ['p', 'strong', 'b', 'em', 'i', 'a']
             );
           }
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${html2txt(markdown)}\n`;
+          text += `${markdown}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;
       } else {
