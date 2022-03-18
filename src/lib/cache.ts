@@ -1,4 +1,5 @@
 import core from '@actions/core';
+import { createHash } from 'crypto';
 import fs from 'fs';
 import { promisify } from 'util';
 import type { RssFeed, RssFeedItem } from '../types.d';
@@ -19,6 +20,10 @@ class CacheRecord {
     this.date = date;
   }
 }
+
+const hash = (str: string): string => {
+  return createHash('sha256').update(str).digest('hex');
+};
 
 const cacheSlug = (item: CacheRecord): string => {
   const { feedTitle, title, created } = item;
@@ -57,7 +62,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
 
         for (const published in cached) {
           const record = new CacheRecord(rss.title, item.title, item.created);
-          if (cached[published] === cacheSlug(record)) {
+          if (cached[published] === hash(cacheSlug(record))) {
             cacheHit = true;
             core.debug(`Cache hit for ${item.title}`);
           }
@@ -96,7 +101,7 @@ const writeCache = async (
     const hashed = [...cached];
     for (const sent of filtered) {
       const record = new CacheRecord(feedTitle, sent.title, sent.created);
-      hashed.push(cacheSlug(record));
+      hashed.push(hash(cacheSlug(record)));
     }
 
     await write(cachePath, JSON.stringify(hashed));

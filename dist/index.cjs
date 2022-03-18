@@ -2281,12 +2281,12 @@ var require_common = __commonJS({
       createDebug.skips = [];
       createDebug.formatters = {};
       function selectColor(namespace) {
-        let hash = 0;
+        let hash2 = 0;
         for (let i2 = 0; i2 < namespace.length; i2++) {
-          hash = (hash << 5) - hash + namespace.charCodeAt(i2);
-          hash |= 0;
+          hash2 = (hash2 << 5) - hash2 + namespace.charCodeAt(i2);
+          hash2 |= 0;
         }
-        return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+        return createDebug.colors[Math.abs(hash2) % createDebug.colors.length];
       }
       createDebug.selectColor = selectColor;
       function createDebug(namespace) {
@@ -24423,6 +24423,7 @@ var import_core7 = __toESM(require_core(), 1);
 
 // src/lib/cache.ts
 var import_core = __toESM(require_core(), 1);
+var import_crypto = require("crypto");
 var import_fs = __toESM(require("fs"), 1);
 var import_util = require("util");
 var read = (0, import_util.promisify)(import_fs.default.readFile);
@@ -24434,6 +24435,9 @@ var CacheRecord = class {
     this.title = title;
     this.date = date;
   }
+};
+var hash = (str) => {
+  return (0, import_crypto.createHash)("sha256").update(str).digest("hex");
 };
 var cacheSlug = (item) => {
   const { feedTitle, title, created } = item;
@@ -24467,7 +24471,7 @@ var checkCache = async (rss, cached) => {
         let cacheHit = false;
         for (const published in cached) {
           const record = new CacheRecord(rss.title, item.title, item.created);
-          if (cached[published] === cacheSlug(record)) {
+          if (cached[published] === hash(cacheSlug(record))) {
             cacheHit = true;
             import_core.default.debug(`Cache hit for ${item.title}`);
           }
@@ -24495,7 +24499,7 @@ var writeCache = async (feedTitle, rssFeed, cacheDir, filtered, cached) => {
     const hashed = [...cached];
     for (const sent of filtered) {
       const record = new CacheRecord(feedTitle, sent.title, sent.created);
-      hashed.push(cacheSlug(record));
+      hashed.push(hash(cacheSlug(record)));
     }
     await write(cachePath, JSON.stringify(hashed));
   } catch (err) {
@@ -29327,8 +29331,8 @@ var getSearch = (parsedURL) => {
     return parsedURL.search;
   }
   const lastOffset = parsedURL.href.length - 1;
-  const hash = parsedURL.hash || (parsedURL.href[lastOffset] === "#" ? "#" : "");
-  return parsedURL.href[lastOffset - hash.length] === "?" ? "?" : "";
+  const hash2 = parsedURL.hash || (parsedURL.href[lastOffset] === "#" ? "#" : "");
+  return parsedURL.href[lastOffset - hash2.length] === "?" ? "?" : "";
 };
 
 // node_modules/node-fetch/src/utils/referrer.js
