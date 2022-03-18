@@ -29970,6 +29970,9 @@ var getFeedImg = async (rssFeed) => {
 };
 
 // src/lib/payload.ts
+import_showdown.default.extension("striptags", function() {
+  return [{ type: "lang", regex: /<\/?small.?>|<\/?var.?>/gm, replace: "" }];
+});
 var converter = new import_showdown.default.Converter();
 var html2txt = (0, import_html_to_text.compile)({
   wordwrap: 120

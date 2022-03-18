@@ -5,6 +5,10 @@ import showdown from 'showdown';
 import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
+showdown.extension('striptags', function () {
+  return [{ type: 'lang', regex: /<\/?small.?>|<\/?var.?>/gm, replace: '' }];
+});
+
 const converter = new showdown.Converter();
 const html2txt = compile({
   wordwrap: 120
