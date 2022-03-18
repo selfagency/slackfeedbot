@@ -27,6 +27,7 @@
     "@babel/core": "^7.17.7",
     "@babel/eslint-parser": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
+    "@parcel/babel-preset-env": "^2.3.2",
     "dayjs": "^1.11.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",

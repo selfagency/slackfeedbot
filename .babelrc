@@ -1,1 +1,1 @@
-{ "presets": ["@parcel/preset-env"] }
+{ "presets": ["@parcel/babel-preset-env"] }
