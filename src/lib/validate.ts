@@ -20,6 +20,7 @@ const validate = (): void => {
   }
 
   if (
+    core.getInput('unfurl').length &&
     core.getBooleanInput('unfurl') &&
     (core.getInput('show_desc').length || core.getInput('show_link').length || core.getInput('show_date').length)
   ) {

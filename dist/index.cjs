@@ -30223,7 +30223,7 @@ var validate = () => {
   if (import_core6.default.getInput("interval") && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
     throw new Error("Invalid interval specified");
   }
-  if (import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length || import_core6.default.getInput("show_link").length || import_core6.default.getInput("show_date").length)) {
+  if (import_core6.default.getInput("unfurl").length && import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length || import_core6.default.getInput("show_link").length || import_core6.default.getInput("show_date").length)) {
     throw new Error("Unfurled links cannot be styled with `show` options");
   }
 };
@@ -30235,11 +30235,11 @@ var run = async () => {
     const slackWebhook = import_core7.default.getInput("slack_webhook");
     const rssFeed = import_core7.default.getInput("rss");
     const cacheDir = import_core7.default.getInput("cache_dir");
-    const interval = import_core7.default.getInput("interval") ? parseInt(import_core7.default.getInput("interval")) : void 0;
-    const unfurl = import_core7.default.getInput("unfurl") ? import_core7.default.getBooleanInput("unfurl") : false;
-    const showDesc = import_core7.default.getInput("show_desc") ? import_core7.default.getBooleanInput("show_desc") : true;
-    const showLink = import_core7.default.getInput("show_link") ? import_core7.default.getBooleanInput("show_link") : true;
-    const showDate = import_core7.default.getInput("show_date") ? import_core7.default.getBooleanInput("show_date") : true;
+    const interval = import_core7.default.getInput("interval").length ? parseInt(import_core7.default.getInput("interval")) : void 0;
+    const unfurl = import_core7.default.getInput("unfurl").length ? import_core7.default.getBooleanInput("unfurl") : false;
+    const showDesc = import_core7.default.getInput("show_desc").length ? import_core7.default.getBooleanInput("show_desc") : true;
+    const showLink = import_core7.default.getInput("show_link").length ? import_core7.default.getBooleanInput("show_link") : true;
+    const showDate = import_core7.default.getInput("show_date").length ? import_core7.default.getBooleanInput("show_date") : true;
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
       const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);
