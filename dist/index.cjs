@@ -24460,7 +24460,7 @@ var readCache = async (rssFeed, cacheDir) => {
     return cached;
   } catch (err) {
     import_core.default.debug(err.message);
-    return [];
+    throw new Error("Failed to read cache");
   }
 };
 var checkCache = async (rss, cached) => {
@@ -29959,7 +29959,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\n/g, "").replace(/<br\/?>/g, "\n");
+            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\n/g, "").replace(/<br\/?>/g, "\n").replace(/\\\\-/g, "-");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${html2txt(markdown).replace(/[Rr]ead more/g, "\u2026")}

@@ -49,7 +49,7 @@ const readCache = async (rssFeed: string, cacheDir: string): Promise<string[]> =
     return cached;
   } catch (err) {
     core.debug((<Error>err).message);
-    return [];
+    throw new Error('Failed to read cache');
   }
 };
 
