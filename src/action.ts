@@ -15,19 +15,17 @@ const run = async () => {
     const rssFeed = core.getInput('rss');
     const cacheDir = core.getInput('cache_dir');
     const interval = core.getInput('interval') ? parseInt(core.getInput('interval')) : undefined;
-    let unfurl = false;
-    try {
-      unfurl = core.getBooleanInput('unfurl');
-    } catch (err) {
-      core.debug((<Error>err).message);
-    }
+    const unfurl = core.getInput('unfurl') ? core.getBooleanInput('unfurl') : false;
+    const showDesc = core.getInput('show_desc') ? core.getBooleanInput('show_desc') : true;
+    const showLink = core.getInput('show_link') ? core.getBooleanInput('show_link') : true;
+    const showDate = core.getInput('show_date') ? core.getBooleanInput('show_date') : true;
 
     // get rss feed items
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
 
     if (filtered.length) {
       // generate payload
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);
 
       // send payload to slack
       await slack(payload, slackWebhook);

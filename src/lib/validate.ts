@@ -18,6 +18,13 @@ const validate = (): void => {
   if (core.getInput('interval') && parseInt(core.getInput('interval')).toString() === 'NaN') {
     throw new Error('Invalid interval specified');
   }
+
+  if (
+    core.getBooleanInput('unfurl') &&
+    (core.getInput('show_desc').length || core.getInput('show_link').length || core.getInput('show_date').length)
+  ) {
+    throw new Error('Unfurled links cannot be styled with `show` options');
+  }
 };
 
 export { validate };

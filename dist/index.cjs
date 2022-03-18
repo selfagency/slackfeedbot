@@ -30121,13 +30121,13 @@ var getFeedImg = async (rssFeed) => {
 // src/lib/payload.ts
 var converter = new import_showdown.default.Converter();
 var html2txt = (0, import_html_to_text.compile)({
-  wordwrap: 120
+  wordwrap: 255
 });
-var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
+var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink) => {
   try {
     const blocks = [];
     filtered.forEach((item) => {
-      var _a, _b;
+      var _a;
       let text = "";
       if (!unfurl) {
         if (item.description) {
@@ -30147,35 +30147,34 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
       if (unfurl) {
         blocks.push({
           type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: (_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")
-            }
-          ],
           text: {
             type: "mrkdwn",
             text: `<${item == null ? void 0 : item.link}|Read more>`
           }
         });
       } else {
-        blocks.push({
-          type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: `<${item == null ? void 0 : item.link}|Read more>`
-            },
-            {
-              type: "mrkdwn",
-              text: `Published ${(_b = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _b.format("MMM D @ h:mma")}`
-            }
-          ],
-          text: {
+        const fields = [];
+        if (showLink) {
+          fields.push({
             type: "mrkdwn",
-            text: text.replace(/Read more/g, "\u2026")
-          }
-        });
+            text: `<${item == null ? void 0 : item.link}|Read more>`
+          });
+        }
+        if (showDate) {
+          fields.push({
+            type: "mrkdwn",
+            text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}`
+          });
+        }
+        if (showDesc && text !== "Read more")
+          blocks.push({
+            type: "section",
+            fields,
+            text: {
+              type: "mrkdwn",
+              text
+            }
+          });
       }
     });
     const payload = {
@@ -30224,6 +30223,9 @@ var validate = () => {
   if (import_core6.default.getInput("interval") && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
     throw new Error("Invalid interval specified");
   }
+  if (import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length || import_core6.default.getInput("show_link").length || import_core6.default.getInput("show_date").length)) {
+    throw new Error("Unfurled links cannot be styled with `show` options");
+  }
 };
 
 // src/action.ts
@@ -30234,15 +30236,13 @@ var run = async () => {
     const rssFeed = import_core7.default.getInput("rss");
     const cacheDir = import_core7.default.getInput("cache_dir");
     const interval = import_core7.default.getInput("interval") ? parseInt(import_core7.default.getInput("interval")) : void 0;
-    let unfurl = false;
-    try {
-      unfurl = import_core7.default.getBooleanInput("unfurl");
-    } catch (err) {
-      import_core7.default.debug(err.message);
-    }
+    const unfurl = import_core7.default.getInput("unfurl") ? import_core7.default.getBooleanInput("unfurl") : false;
+    const showDesc = import_core7.default.getInput("show_desc") ? import_core7.default.getBooleanInput("show_desc") : true;
+    const showLink = import_core7.default.getInput("show_link") ? import_core7.default.getBooleanInput("show_link") : true;
+    const showDate = import_core7.default.getInput("show_date") ? import_core7.default.getBooleanInput("show_date") : true;
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);
       await slack(payload, slackWebhook);
       if (cacheDir)
         await writeCache((unfiltered == null ? void 0 : unfiltered.title) || "", rssFeed, cacheDir, filtered, cached);

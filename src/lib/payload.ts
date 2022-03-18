@@ -9,14 +9,17 @@ import { getFeedImg } from './feedimg';
 
 const converter = new showdown.Converter();
 const html2txt = compile({
-  wordwrap: 120
+  wordwrap: 255
 });
 
 const genPayload = async (
   filtered: RssFeedItem[],
   unfiltered: RssFeed,
   rssFeed: string,
-  unfurl: boolean
+  unfurl: boolean,
+  showDesc: boolean,
+  showDate: boolean,
+  showLink: boolean
 ): Promise<Payload> => {
   try {
     const blocks: Block[] = [];
@@ -47,35 +50,37 @@ const genPayload = async (
       if (unfurl) {
         blocks.push({
           type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: dayjs(item?.created)?.format('MMM D @ h:mma')
-            }
-          ],
           text: {
             type: 'mrkdwn',
             text: `<${item?.link}|Read more>`
           }
         });
       } else {
-        blocks.push({
-          type: 'section',
-          fields: [
-            {
-              type: 'mrkdwn',
-              text: `<${item?.link}|Read more>`
-            },
-            {
-              type: 'mrkdwn',
-              text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}`
-            }
-          ],
-          text: {
+        const fields = [];
+
+        if (showLink) {
+          fields.push({
             type: 'mrkdwn',
-            text: text.replace(/Read more/g, '…')
-          }
-        });
+            text: `<${item?.link}|Read more>`
+          });
+        }
+
+        if (showDate) {
+          fields.push({
+            type: 'mrkdwn',
+            text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}`
+          });
+        }
+
+        if (showDesc && text !== 'Read more')
+          blocks.push({
+            type: 'section',
+            fields,
+            text: {
+              type: 'mrkdwn',
+              text
+            }
+          });
       }
     });
 
