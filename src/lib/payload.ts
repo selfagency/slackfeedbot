@@ -2,6 +2,7 @@ import core from '@actions/core';
 import { compile } from 'html-to-text';
 import { parseHTML } from 'linkedom';
 import showdown from 'showdown';
+import striptags from 'striptags';
 import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
@@ -27,15 +28,20 @@ const genPayload = async (
           const { document } = parseHTML('<div></div>');
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description
-              .replace(/&gt;/g, '>')
-              .replace(/&lt;/g, '<')
-              .replace(/\n/g, '')
-              .replace(/<br\/?>/g, '\n')
-              .replace(/\\\\-/g, '-');
+            desc = striptags(
+              item.description
+                .replace(/&gt;/g, '>')
+                .replace(/&lt;/g, '<')
+                .replace(/\n/g, ' ')
+                .replace(/<br\/?>/g, ' ')
+                .replace(/\\\\/g, '')
+                .replace(/[Rr]ead more/g, '…')
+                .replace(/\.\s+/g, '.\n'),
+              ['strong', 'b', 'em', 'i', 'a']
+            );
           }
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${html2txt(markdown).replace(/[Rr]ead more/g, '…')}\n`;
+          text += `${html2txt(markdown)}\n`;
         }
         if (item.link) text += `<${item.link}|Read more>`;
       } else {
