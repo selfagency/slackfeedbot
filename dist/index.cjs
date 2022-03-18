@@ -29987,7 +29987,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
           const { document: document2 } = parseHTML("<div></div>");
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = html2txt(item.description);
+            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<");
           }
           const markdown = converter.makeMarkdown(desc, document2);
           text += `${markdown.replace(/[Rr]ead more/g, "\u2026").replace(/\n/g, " ")}

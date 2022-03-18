@@ -27,7 +27,7 @@ const genPayload = async (
           const { document } = parseHTML('<div></div>');
           let desc = item.description;
           if (/&gt;.+&lt;/.test(item.description)) {
-            desc = html2txt(item.description);
+            desc = item.description.replace(/&gt;/g, '>').replace(/&lt;/g, '<');
           }
           const markdown = converter.makeMarkdown(desc, document);
           text += `${markdown.replace(/[Rr]ead more/g, '…').replace(/\n/g, ' ')}\n`;
