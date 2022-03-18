@@ -107,7 +107,7 @@ const run = async () => {
                 cacheHit = true;
               }
             }
-            if (cacheHit) toSend.push(item);
+            if (!cacheHit) toSend.push(item);
           }
         } catch (err) {
           debug(err.message);
