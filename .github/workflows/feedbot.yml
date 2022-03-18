@@ -17,8 +17,22 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./slackfeedbot-cache
-          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: feed-cache-
+          key: feed-cache-e-${{ steps.generate-key.outputs.cache-key }}
+          restore-keys: feed-cache-e-
+      - name: LAT
+        uses: 'selfagency/slackfeedbot@dev'
+        with:
+          rss: 'https://www.latimes.com/rss2.0.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          cache_dir: './slackfeedbot-cache'
+        continue-on-error: true
+      - name: WaPo
+        uses: 'selfagency/slackfeedbot@dev'
+        with:
+          rss: 'https://feeds.washingtonpost.com/rss/homepage'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          cache_dir: './slackfeedbot-cache'
+        continue-on-error: true
       - name: GitHub
         uses: 'selfagency/slackfeedbot@dev'
         with:
