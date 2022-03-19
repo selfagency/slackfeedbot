@@ -19,6 +19,7 @@ const genPayload = async (
   rssFeed: string,
   unfurl: boolean,
   showDesc: boolean,
+  showImg: boolean,
   showDate: boolean,
   showLink: boolean
 ): Promise<Payload> => {
@@ -37,7 +38,7 @@ const genPayload = async (
             ' '
           );
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${markdown.replace(/\\-/g, '-')}\n`;
+          text += `${markdown.replace(/\\-/g, '-').replace(/\\\|/g, '|')}`;
         }
       }
 
@@ -67,21 +68,30 @@ const genPayload = async (
         }
 
         if (showDate) {
-          fields.push({
-            type: 'mrkdwn',
-            text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}`
+          blocks.push({
+            type: 'context',
+            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}` }]
           });
         }
 
-        if (showDesc && !text.trim().toLowerCase().startsWith('read more'))
-          blocks.push({
-            type: 'section',
-            fields,
-            text: {
-              type: 'mrkdwn',
-              text
-            }
-          });
+        blocks.push({
+          type: 'section',
+          fields,
+          accessory:
+            showImg && item.image
+              ? {
+                  type: 'image',
+                  image_url: item.image
+                }
+              : undefined,
+          text:
+            showDesc && !text.trim().toLowerCase().startsWith('read more')
+              ? {
+                  type: 'mrkdwn',
+                  text
+                }
+              : undefined
+        });
       }
     });
 

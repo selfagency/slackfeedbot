@@ -30,13 +30,16 @@ interface Icons {
   icons?: Icon[];
 }
 
+/* eslint-disable camelcase */
 interface Block {
   type?: string;
   text?: string | Block;
   fields?: Block[];
+  image_url?: string;
+  accessory?: Block;
+  elements?: Block[];
 }
 
-/* eslint-disable camelcase */
 interface Payload {
   as_user?: boolean;
   username?: string;

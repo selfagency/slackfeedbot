@@ -13,7 +13,8 @@ const validate = (): void => {
       unfurl: core.getInput('unfurl'),
       showDesc: core.getInput('show_desc'),
       showLink: core.getInput('show_link'),
-      showDate: core.getInput('show_date')
+      showDate: core.getInput('show_date'),
+      showImg: core.getInput('show_img')
     })}`
   );
 
@@ -38,7 +39,8 @@ const validate = (): void => {
     core.getBooleanInput('unfurl') &&
     (core.getInput('show_desc').length > 0 ||
       core.getInput('show_link').length > 0 ||
-      core.getInput('show_date').length > 0)
+      core.getInput('show_date').length > 0 ||
+      core.getInput('show_img').length > 0)
   ) {
     throw new Error('Unfurled links cannot be styled with `show` options');
   }

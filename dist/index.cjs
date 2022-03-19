@@ -30123,7 +30123,7 @@ var converter = new import_showdown.default.Converter();
 var html2txt = (0, import_html_to_text.compile)({
   wordwrap: 255
 });
-var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink) => {
+var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink) => {
   try {
     const blocks = [];
     filtered.forEach((item) => {
@@ -30134,8 +30134,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDat
           const { document: document2 } = parseHTML("<div></div>");
           const desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${markdown.replace(/\\-/g, "-")}
-`;
+          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|")}`;
         }
       }
       if (item == null ? void 0 : item.title) {
@@ -30161,20 +30160,23 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showDat
           });
         }
         if (showDate) {
-          fields.push({
-            type: "mrkdwn",
-            text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}`
+          blocks.push({
+            type: "context",
+            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}` }]
           });
         }
-        if (showDesc && !text.trim().toLowerCase().startsWith("read more"))
-          blocks.push({
-            type: "section",
-            fields,
-            text: {
-              type: "mrkdwn",
-              text
-            }
-          });
+        blocks.push({
+          type: "section",
+          fields,
+          accessory: showImg && item.image ? {
+            type: "image",
+            image_url: item.image
+          } : void 0,
+          text: showDesc && !text.trim().toLowerCase().startsWith("read more") ? {
+            type: "mrkdwn",
+            text
+          } : void 0
+        });
       }
     });
     const payload = {
@@ -30219,7 +30221,8 @@ var validate = () => {
     unfurl: import_core6.default.getInput("unfurl"),
     showDesc: import_core6.default.getInput("show_desc"),
     showLink: import_core6.default.getInput("show_link"),
-    showDate: import_core6.default.getInput("show_date")
+    showDate: import_core6.default.getInput("show_date"),
+    showImg: import_core6.default.getInput("show_img")
   })}`);
   if (import_core6.default.getInput("rss").length === 0 || !import_core6.default.getInput("rss").startsWith("http")) {
     throw new Error("No feed or invalid feed specified");
@@ -30233,7 +30236,7 @@ var validate = () => {
   if (import_core6.default.getInput("interval").length > 0 && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
     throw new Error("Invalid interval specified");
   }
-  if (import_core6.default.getInput("unfurl").length > 0 && import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length > 0 || import_core6.default.getInput("show_link").length > 0 || import_core6.default.getInput("show_date").length > 0)) {
+  if (import_core6.default.getInput("unfurl").length > 0 && import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length > 0 || import_core6.default.getInput("show_link").length > 0 || import_core6.default.getInput("show_date").length > 0 || import_core6.default.getInput("show_img").length > 0)) {
     throw new Error("Unfurled links cannot be styled with `show` options");
   }
 };
