@@ -17,6 +17,15 @@ inputs:
   interval:
     description: 'Minutes between workflow runs'
     required: false
+  show_date:
+    description: 'Show date in output'
+    required: false
+  show_link:
+    description: 'Show link in output'
+    required: false
+  show_description:
+    description: 'Show description in output'
+    required: false
   unfurl:
     description: 'Unfurl links'
     required: false

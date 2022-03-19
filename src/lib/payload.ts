@@ -1,54 +1,98 @@
 import core from '@actions/core';
+import dayjs from 'dayjs';
 import { compile } from 'html-to-text';
 import { parseHTML } from 'linkedom';
 import showdown from 'showdown';
+import striptags from 'striptags';
 import type { Block, Payload, RssFeed, RssFeedItem } from '../types.d';
 import { getFeedImg } from './feedimg';
 
 const converter = new showdown.Converter();
 const html2txt = compile({
-  wordwrap: 120
+  wordwrap: 255
 });
 
+// Generates the payload to publish to Slack
 const genPayload = async (
   filtered: RssFeedItem[],
   unfiltered: RssFeed,
   rssFeed: string,
-  unfurl: boolean
+  unfurl: boolean,
+  showDesc: boolean,
+  showImg: boolean,
+  showDate: boolean,
+  showLink: boolean
 ): Promise<Payload> => {
   try {
-    const blocks: Block[] = filtered.map(item => {
+    const blocks: Block[] = [];
+    filtered.forEach(item => {
       let text = '';
 
       if (!unfurl) {
-        if (item.title) text += `*${html2txt(item.title)}*\n`;
         if (item.description) {
           // core.debug(`Item description: ${item.description}`);
           const { document } = parseHTML('<div></div>');
-          let desc = item.description;
-          if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description
-              .replace(/&gt;/g, '>')
-              .replace(/&lt;/g, '<')
-              .replace(/\n/g, '')
-              .replace(/<br\/?>/g, '\n')
-              .replace(/\\\\-/g, '-');
-          }
+          const desc = striptags(
+            item.description.replace(/&gt;/g, '>').replace(/&lt;/g, '<'),
+            ['p', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li'],
+            ' '
+          );
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${html2txt(markdown).replace(/[Rr]ead more/g, '…')}\n`;
+          text += `${markdown.replace(/\\-/g, '-').replace(/\\\|/g, '|')}`;
         }
-        if (item.link) text += `<${item.link}|Read more>`;
-      } else {
-        if (item.title) text += `<${item.link}|${html2txt(item.title + item.created)}>`;
       }
 
-      return {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text
+      if (item?.title) {
+        blocks.push({
+          type: 'header',
+          text: { type: 'plain_text', text: html2txt(item?.title) }
+        });
+      }
+
+      if (unfurl) {
+        blocks.push({
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `<${item?.link}|Read more>`
+          }
+        });
+      } else {
+        const fields = [];
+
+        if (showLink) {
+          fields.push({
+            type: 'mrkdwn',
+            text: `<${item?.link}|Read more>`
+          });
         }
-      };
+
+        blocks.push({
+          type: 'section',
+          fields,
+          accessory:
+            showImg && item.image
+              ? {
+                  type: 'image',
+                  image_url: item.image
+                }
+              : undefined,
+          text:
+            showDesc && !text.trim().toLowerCase().startsWith('read more')
+              ? {
+                  type: 'mrkdwn',
+                  text
+                }
+              : undefined
+        });
+
+        if (showDate) {
+          blocks.push({
+            type: 'context',
+            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')} UTC` }]
+          });
+        }
+      }
     });
 
     const payload = {

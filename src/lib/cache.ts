@@ -8,11 +8,12 @@ const read = promisify(fs.readFile);
 const write = promisify(fs.writeFile);
 const md = promisify(fs.mkdir);
 
+// Defines a CacheRecord, which is used to check if an item has already been published
 class CacheRecord {
   [index: string]: string | number | undefined;
-  feedTitle?: string;
-  title?: string;
-  date?: string | number;
+  feedTitle?: string; // title of the rss feed
+  title?: string; // title of the post
+  date?: string | number; // publish date of the post
 
   constructor(feedTitle?: string, title?: string, date?: number | string) {
     this.feedTitle = feedTitle;
@@ -21,15 +22,19 @@ class CacheRecord {
   }
 }
 
+// For hashing the CacheRecord
 const hash = (str: string): string => {
   return createHash('sha256').update(str).digest('hex');
 };
 
+// Generates a hashable string from the CacheRecord
 const cacheSlug = (item: CacheRecord): string => {
   const { feedTitle, title, created } = item;
+
   let slug = '';
   slug += feedTitle?.toLowerCase().replace(/[^a-z0-9]/g, '-');
   slug += title?.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
   if (created) {
     const date = new Date(created);
     slug += `${slug}-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -37,6 +42,7 @@ const cacheSlug = (item: CacheRecord): string => {
   return slug;
 };
 
+// Reads the cache file and returns it as an array of hashes
 const readCache = async (rssFeed: string, cacheDir: string): Promise<string[]> => {
   try {
     core.debug(`Retrieving previously published entries…`);
@@ -53,15 +59,19 @@ const readCache = async (rssFeed: string, cacheDir: string): Promise<string[]> =
   }
 };
 
+// Checks if an item has already been published by comparing hashed CacheRecords
 const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]> => {
   try {
     if (rss?.items) {
       const output = [];
+      // For each item in the RSS feed
       for (const item of rss.items) {
         let cacheHit = false;
 
+        // Compare the item to the cached items
         for (const published in cached) {
           const record = new CacheRecord(rss.title, item.title, item.created);
+
           if (cached[published] === hash(cacheSlug(record))) {
             cacheHit = true;
             core.debug(`Cache hit for ${item.title}`);
@@ -71,7 +81,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
         if (!cacheHit) output.push(item);
       }
 
-      core.debug(`Found ${output.length} new items`);
+      core.debug(`Found ${output.length} uncached items`);
       return output;
     } else {
       core.debug('Nothing to check');
@@ -83,6 +93,7 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
   }
 };
 
+// Writes the cached entries back to the disk for future use
 const writeCache = async (
   feedTitle: string,
   rssFeed: string,

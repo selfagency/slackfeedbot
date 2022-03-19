@@ -1,6 +1,6 @@
 {
   "name": "slackfeedbot",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Push RSS feed updates to Slack via GitHub Actions",
   "repository": {
     "type": "git",
@@ -32,7 +32,8 @@
     "node-fetch": "^3.2.3",
     "object-sha": "^2.0.6",
     "rss-to-json": "^2.0.2",
-    "showdown": "^2.0.3"
+    "showdown": "^2.0.3",
+    "striptags": "^3.2.0"
   },
   "devDependencies": {
     "@types/html-to-text": "^8.1.0",

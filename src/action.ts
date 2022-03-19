@@ -7,32 +7,44 @@ import { validate } from './lib/validate';
 
 const run = async () => {
   try {
-    // validate inputs
+    // Validate inputs
     validate();
 
-    // parse inputs
+    // Parse inputs
     const slackWebhook = core.getInput('slack_webhook');
     const rssFeed = core.getInput('rss');
     const cacheDir = core.getInput('cache_dir');
-    const interval = core.getInput('interval') ? parseInt(core.getInput('interval')) : undefined;
-    let unfurl = false;
-    try {
-      unfurl = core.getBooleanInput('unfurl');
-    } catch (err) {
-      core.debug((<Error>err).message);
-    }
+    const interval = core.getInput('interval').length > 0 ? parseInt(core.getInput('interval')) : undefined;
+    const unfurl = core.getInput('unfurl').length > 0 ? core.getBooleanInput('unfurl') : false;
+    const showDesc = core.getInput('show_desc').length > 0 ? core.getBooleanInput('show_desc') : true;
+    const showLink = core.getInput('show_link').length > 0 ? core.getBooleanInput('show_link') : true;
+    const showDate = core.getInput('show_date').length > 0 ? core.getBooleanInput('show_date') : true;
+    const showImg = core.getInput('show_img').length > 0 ? core.getBooleanInput('show_img') : true;
 
-    // get rss feed items
+    core.debug(
+      `Processed inputs: ${JSON.stringify({
+        slackWebhook,
+        rssFeed,
+        cacheDir,
+        interval,
+        unfurl,
+        showDesc,
+        showLink,
+        showDate
+      })}`
+    );
+
+    // Get RSS feed items
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
 
     if (filtered.length) {
-      // generate payload
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
+      // Generate payload
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
 
-      // send payload to slack
+      // Send payload to Slack
       await slack(payload, slackWebhook);
 
-      // cache data
+      // Save cache data
       if (cacheDir) await writeCache(unfiltered?.title || '', rssFeed, cacheDir, filtered, cached);
     } else {
       core.info(`No new items found`);

@@ -2,6 +2,7 @@ import core from '@actions/core';
 import fetch from 'node-fetch';
 import type { Icons } from '../types.d';
 
+// Gets the website's favicon
 const getFeedImg = async (rssFeed: string): Promise<string | undefined> => {
   const url = new URL(rssFeed);
   const host = url.hostname

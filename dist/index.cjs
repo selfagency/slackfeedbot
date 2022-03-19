@@ -20070,6 +20070,178 @@ var require_showdown = __commonJS({
   }
 });
 
+// node_modules/striptags/src/striptags.js
+var require_striptags = __commonJS({
+  "node_modules/striptags/src/striptags.js"(exports, module2) {
+    "use strict";
+    (function(global2) {
+      if (typeof Symbol2 !== "function") {
+        var Symbol2 = function(name) {
+          return name;
+        };
+        Symbol2.nonNative = true;
+      }
+      const STATE_PLAINTEXT = Symbol2("plaintext");
+      const STATE_HTML = Symbol2("html");
+      const STATE_COMMENT = Symbol2("comment");
+      const ALLOWED_TAGS_REGEX = /<(\w*)>/g;
+      const NORMALIZE_TAG_REGEX = /<\/?([^\s\/>]+)/;
+      function striptags2(html, allowable_tags, tag_replacement) {
+        html = html || "";
+        allowable_tags = allowable_tags || [];
+        tag_replacement = tag_replacement || "";
+        let context = init_context(allowable_tags, tag_replacement);
+        return striptags_internal(html, context);
+      }
+      function init_striptags_stream(allowable_tags, tag_replacement) {
+        allowable_tags = allowable_tags || [];
+        tag_replacement = tag_replacement || "";
+        let context = init_context(allowable_tags, tag_replacement);
+        return function striptags_stream(html) {
+          return striptags_internal(html || "", context);
+        };
+      }
+      striptags2.init_streaming_mode = init_striptags_stream;
+      function init_context(allowable_tags, tag_replacement) {
+        allowable_tags = parse_allowable_tags(allowable_tags);
+        return {
+          allowable_tags,
+          tag_replacement,
+          state: STATE_PLAINTEXT,
+          tag_buffer: "",
+          depth: 0,
+          in_quote_char: ""
+        };
+      }
+      function striptags_internal(html, context) {
+        if (typeof html != "string") {
+          throw new TypeError("'html' parameter must be a string");
+        }
+        let allowable_tags = context.allowable_tags;
+        let tag_replacement = context.tag_replacement;
+        let state = context.state;
+        let tag_buffer = context.tag_buffer;
+        let depth = context.depth;
+        let in_quote_char = context.in_quote_char;
+        let output = "";
+        for (let idx = 0, length = html.length; idx < length; idx++) {
+          let char = html[idx];
+          if (state === STATE_PLAINTEXT) {
+            switch (char) {
+              case "<":
+                state = STATE_HTML;
+                tag_buffer += char;
+                break;
+              default:
+                output += char;
+                break;
+            }
+          } else if (state === STATE_HTML) {
+            switch (char) {
+              case "<":
+                if (in_quote_char) {
+                  break;
+                }
+                depth++;
+                break;
+              case ">":
+                if (in_quote_char) {
+                  break;
+                }
+                if (depth) {
+                  depth--;
+                  break;
+                }
+                in_quote_char = "";
+                state = STATE_PLAINTEXT;
+                tag_buffer += ">";
+                if (allowable_tags.has(normalize_tag(tag_buffer))) {
+                  output += tag_buffer;
+                } else {
+                  output += tag_replacement;
+                }
+                tag_buffer = "";
+                break;
+              case '"':
+              case "'":
+                if (char === in_quote_char) {
+                  in_quote_char = "";
+                } else {
+                  in_quote_char = in_quote_char || char;
+                }
+                tag_buffer += char;
+                break;
+              case "-":
+                if (tag_buffer === "<!-") {
+                  state = STATE_COMMENT;
+                }
+                tag_buffer += char;
+                break;
+              case " ":
+              case "\n":
+                if (tag_buffer === "<") {
+                  state = STATE_PLAINTEXT;
+                  output += "< ";
+                  tag_buffer = "";
+                  break;
+                }
+                tag_buffer += char;
+                break;
+              default:
+                tag_buffer += char;
+                break;
+            }
+          } else if (state === STATE_COMMENT) {
+            switch (char) {
+              case ">":
+                if (tag_buffer.slice(-2) == "--") {
+                  state = STATE_PLAINTEXT;
+                }
+                tag_buffer = "";
+                break;
+              default:
+                tag_buffer += char;
+                break;
+            }
+          }
+        }
+        context.state = state;
+        context.tag_buffer = tag_buffer;
+        context.depth = depth;
+        context.in_quote_char = in_quote_char;
+        return output;
+      }
+      function parse_allowable_tags(allowable_tags) {
+        let tag_set = /* @__PURE__ */ new Set();
+        if (typeof allowable_tags === "string") {
+          let match;
+          while (match = ALLOWED_TAGS_REGEX.exec(allowable_tags)) {
+            tag_set.add(match[1]);
+          }
+        } else if (!Symbol2.nonNative && typeof allowable_tags[Symbol2.iterator] === "function") {
+          tag_set = new Set(allowable_tags);
+        } else if (typeof allowable_tags.forEach === "function") {
+          allowable_tags.forEach(tag_set.add, tag_set);
+        }
+        return tag_set;
+      }
+      function normalize_tag(tag_buffer) {
+        let match = NORMALIZE_TAG_REGEX.exec(tag_buffer);
+        return match ? match[1].toLowerCase() : null;
+      }
+      if (typeof define === "function" && define.amd) {
+        define(function module_factory() {
+          return striptags2;
+        });
+      } else if (typeof module2 === "object" && module2.exports) {
+        module2.exports = striptags2;
+      } else {
+        global2.striptags = striptags2;
+      }
+    })(exports);
+  }
+});
+
 // node_modules/web-streams-polyfill/dist/ponyfill.es2018.js
 var require_ponyfill_es2018 = __commonJS({
   "node_modules/web-streams-polyfill/dist/ponyfill.es2018.js"(exports, module2) {
@@ -24479,7 +24651,7 @@ var checkCache = async (rss, cached) => {
         if (!cacheHit)
           output.push(item);
       }
-      import_core.default.debug(`Found ${output.length} new items`);
+      import_core.default.debug(`Found ${output.length} uncached items`);
       return output;
     } else {
       import_core.default.debug("Nothing to check");
@@ -24524,11 +24696,13 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
       import_core2.default.debug(`Retrieving previously cached entries\u2026`);
       try {
         cached = await readCache(rssFeed, cacheDir);
-        toSend = await checkCache(rss, cached);
+        toSend = (await checkCache(rss, cached)).filter((item) => {
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"));
+        });
       } catch (err) {
         import_core2.default.debug(err.message);
         toSend = rss.items.filter((item) => {
-          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(60, "minute"));
+          return (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"));
         });
       }
     } else if (interval) {
@@ -24545,6 +24719,7 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
 
 // src/lib/payload.ts
 var import_core4 = __toESM(require_core(), 1);
+var import_dayjs2 = __toESM(require_dayjs_min(), 1);
 var import_html_to_text = __toESM(require_html_to_text2(), 1);
 
 // node_modules/linkedom/esm/shared/symbols.js
@@ -28755,6 +28930,7 @@ setPrototypeOf(Document3, Document).prototype = Document.prototype;
 
 // src/lib/payload.ts
 var import_showdown = __toESM(require_showdown(), 1);
+var import_striptags = __toESM(require_striptags(), 1);
 
 // src/lib/feedimg.ts
 var import_core3 = __toESM(require_core(), 1);
@@ -29945,39 +30121,63 @@ var getFeedImg = async (rssFeed) => {
 // src/lib/payload.ts
 var converter = new import_showdown.default.Converter();
 var html2txt = (0, import_html_to_text.compile)({
-  wordwrap: 120
+  wordwrap: 255
 });
-var genPayload = async (filtered, unfiltered, rssFeed, unfurl) => {
+var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink) => {
   try {
-    const blocks = filtered.map((item) => {
+    const blocks = [];
+    filtered.forEach((item) => {
+      var _a;
       let text = "";
       if (!unfurl) {
-        if (item.title)
-          text += `*${html2txt(item.title)}*
-`;
         if (item.description) {
           const { document: document2 } = parseHTML("<div></div>");
-          let desc = item.description;
-          if (/&gt;.+&lt;/.test(item.description)) {
-            desc = item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\n/g, "").replace(/<br\/?>/g, "\n").replace(/\\\\-/g, "-");
-          }
+          const desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${html2txt(markdown).replace(/[Rr]ead more/g, "\u2026")}
-`;
+          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|")}`;
         }
-        if (item.link)
-          text += `<${item.link}|Read more>`;
-      } else {
-        if (item.title)
-          text += `<${item.link}|${html2txt(item.title + item.created)}>`;
       }
-      return {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text
+      if (item == null ? void 0 : item.title) {
+        blocks.push({
+          type: "header",
+          text: { type: "plain_text", text: html2txt(item == null ? void 0 : item.title) }
+        });
+      }
+      if (unfurl) {
+        blocks.push({
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `<${item == null ? void 0 : item.link}|Read more>`
+          }
+        });
+      } else {
+        const fields = [];
+        if (showLink) {
+          fields.push({
+            type: "mrkdwn",
+            text: `<${item == null ? void 0 : item.link}|Read more>`
+          });
         }
-      };
+        blocks.push({
+          type: "section",
+          fields,
+          accessory: showImg && item.image ? {
+            type: "image",
+            image_url: item.image
+          } : void 0,
+          text: showDesc && !text.trim().toLowerCase().startsWith("read more") ? {
+            type: "mrkdwn",
+            text
+          } : void 0
+        });
+        if (showDate) {
+          blocks.push({
+            type: "context",
+            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")} UTC` }]
+          });
+        }
+      }
     });
     const payload = {
       as_user: false,
@@ -30013,17 +30213,31 @@ var slack = async (payload, webhook) => {
 var import_core6 = __toESM(require_core(), 1);
 var validate = () => {
   import_core6.default.debug(`Validating inputs\u2026`);
-  if (!import_core6.default.getInput("rss") || !import_core6.default.getInput("rss").startsWith("http")) {
+  import_core6.default.debug(`Inputs: ${JSON.stringify({
+    slackWebhook: import_core6.default.getInput("slack_webhook"),
+    rssFeed: import_core6.default.getInput("rss"),
+    cacheDir: import_core6.default.getInput("cache_dir"),
+    interval: import_core6.default.getInput("interval"),
+    unfurl: import_core6.default.getInput("unfurl"),
+    showDesc: import_core6.default.getInput("show_desc"),
+    showLink: import_core6.default.getInput("show_link"),
+    showDate: import_core6.default.getInput("show_date"),
+    showImg: import_core6.default.getInput("show_img")
+  })}`);
+  if (import_core6.default.getInput("rss").length === 0 || !import_core6.default.getInput("rss").startsWith("http")) {
     throw new Error("No feed or invalid feed specified");
   }
-  if (!import_core6.default.getInput("slack_webhook") || !import_core6.default.getInput("slack_webhook").startsWith("https")) {
+  if (import_core6.default.getInput("slack_webhook").length === 0 || !import_core6.default.getInput("slack_webhook").startsWith("https")) {
     throw new Error("No Slack webhook or invalid webhook specified");
   }
-  if (!import_core6.default.getInput("interval") && !import_core6.default.getInput("cache_dir")) {
+  if (import_core6.default.getInput("interval").length === 0 && import_core6.default.getInput("cache_dir").length === 0) {
     throw new Error("No interval or cache folder specified");
   }
-  if (import_core6.default.getInput("interval") && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
+  if (import_core6.default.getInput("interval").length > 0 && parseInt(import_core6.default.getInput("interval")).toString() === "NaN") {
     throw new Error("Invalid interval specified");
+  }
+  if (import_core6.default.getInput("unfurl").length > 0 && import_core6.default.getBooleanInput("unfurl") && (import_core6.default.getInput("show_desc").length > 0 || import_core6.default.getInput("show_link").length > 0 || import_core6.default.getInput("show_date").length > 0 || import_core6.default.getInput("show_img").length > 0)) {
+    throw new Error("Unfurled links cannot be styled with `show` options");
   }
 };
 
@@ -30034,16 +30248,25 @@ var run = async () => {
     const slackWebhook = import_core7.default.getInput("slack_webhook");
     const rssFeed = import_core7.default.getInput("rss");
     const cacheDir = import_core7.default.getInput("cache_dir");
-    const interval = import_core7.default.getInput("interval") ? parseInt(import_core7.default.getInput("interval")) : void 0;
-    let unfurl = false;
-    try {
-      unfurl = import_core7.default.getBooleanInput("unfurl");
-    } catch (err) {
-      import_core7.default.debug(err.message);
-    }
+    const interval = import_core7.default.getInput("interval").length > 0 ? parseInt(import_core7.default.getInput("interval")) : void 0;
+    const unfurl = import_core7.default.getInput("unfurl").length > 0 ? import_core7.default.getBooleanInput("unfurl") : false;
+    const showDesc = import_core7.default.getInput("show_desc").length > 0 ? import_core7.default.getBooleanInput("show_desc") : true;
+    const showLink = import_core7.default.getInput("show_link").length > 0 ? import_core7.default.getBooleanInput("show_link") : true;
+    const showDate = import_core7.default.getInput("show_date").length > 0 ? import_core7.default.getBooleanInput("show_date") : true;
+    const showImg = import_core7.default.getInput("show_img").length > 0 ? import_core7.default.getBooleanInput("show_img") : true;
+    import_core7.default.debug(`Processed inputs: ${JSON.stringify({
+      slackWebhook,
+      rssFeed,
+      cacheDir,
+      interval,
+      unfurl,
+      showDesc,
+      showLink,
+      showDate
+    })}`);
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
       await slack(payload, slackWebhook);
       if (cacheDir)
         await writeCache((unfiltered == null ? void 0 : unfiltered.title) || "", rssFeed, cacheDir, filtered, cached);

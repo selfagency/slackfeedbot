@@ -2,6 +2,7 @@ import core from '@actions/core';
 import fetch from 'node-fetch';
 import { Payload } from '../types';
 
+// Publishes messages to Slack
 const slack = async (payload: Payload, webhook: string) => {
   const res = await fetch(webhook, {
     method: 'POST',
