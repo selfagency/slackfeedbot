@@ -30174,7 +30174,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
         if (showDate) {
           blocks.push({
             type: "context",
-            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}` }]
+            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")} UTC` }]
           });
         }
       }

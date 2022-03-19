@@ -89,7 +89,7 @@ const genPayload = async (
         if (showDate) {
           blocks.push({
             type: 'context',
-            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}` }]
+            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')} UTC` }]
           });
         }
       }
