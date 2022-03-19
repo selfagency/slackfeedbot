@@ -30253,6 +30253,7 @@ var run = async () => {
     const showDesc = import_core7.default.getInput("show_desc").length > 0 ? import_core7.default.getBooleanInput("show_desc") : true;
     const showLink = import_core7.default.getInput("show_link").length > 0 ? import_core7.default.getBooleanInput("show_link") : true;
     const showDate = import_core7.default.getInput("show_date").length > 0 ? import_core7.default.getBooleanInput("show_date") : true;
+    const showImg = import_core7.default.getInput("show_img").length > 0 ? import_core7.default.getBooleanInput("show_img") : true;
     import_core7.default.debug(`Processed inputs: ${JSON.stringify({
       slackWebhook,
       rssFeed,
@@ -30265,7 +30266,7 @@ var run = async () => {
     })}`);
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
       await slack(payload, slackWebhook);
       if (cacheDir)
         await writeCache((unfiltered == null ? void 0 : unfiltered.title) || "", rssFeed, cacheDir, filtered, cached);

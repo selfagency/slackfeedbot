@@ -19,6 +19,7 @@ const run = async () => {
     const showDesc = core.getInput('show_desc').length > 0 ? core.getBooleanInput('show_desc') : true;
     const showLink = core.getInput('show_link').length > 0 ? core.getBooleanInput('show_link') : true;
     const showDate = core.getInput('show_date').length > 0 ? core.getBooleanInput('show_date') : true;
+    const showImg = core.getInput('show_img').length > 0 ? core.getBooleanInput('show_img') : true;
 
     core.debug(
       `Processed inputs: ${JSON.stringify({
@@ -38,7 +39,7 @@ const run = async () => {
 
     if (filtered.length) {
       // Generate payload
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showDate, showLink);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
 
       // Send payload to Slack
       await slack(payload, slackWebhook);
