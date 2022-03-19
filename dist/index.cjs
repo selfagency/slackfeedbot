@@ -30159,12 +30159,6 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
             text: `<${item == null ? void 0 : item.link}|Read more>`
           });
         }
-        if (showDate) {
-          blocks.push({
-            type: "context",
-            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}` }]
-          });
-        }
         blocks.push({
           type: "section",
           fields,
@@ -30177,6 +30171,12 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
             text
           } : void 0
         });
+        if (showDate) {
+          blocks.push({
+            type: "context",
+            elements: [{ type: "mrkdwn", text: `Published ${(_a = (0, import_dayjs2.default)(item == null ? void 0 : item.created)) == null ? void 0 : _a.format("MMM D @ h:mma")}` }]
+          });
+        }
       }
     });
     const payload = {

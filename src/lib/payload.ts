@@ -67,13 +67,6 @@ const genPayload = async (
           });
         }
 
-        if (showDate) {
-          blocks.push({
-            type: 'context',
-            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}` }]
-          });
-        }
-
         blocks.push({
           type: 'section',
           fields,
@@ -92,6 +85,13 @@ const genPayload = async (
                 }
               : undefined
         });
+
+        if (showDate) {
+          blocks.push({
+            type: 'context',
+            elements: [{ type: 'mrkdwn', text: `Published ${dayjs(item?.created)?.format('MMM D @ h:mma')}` }]
+          });
+        }
       }
     });
 
