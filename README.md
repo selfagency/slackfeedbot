@@ -58,7 +58,7 @@ jobs:
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1.2.7'
+        uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1.2.7'
+        uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -110,13 +110,13 @@ jobs:
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-
       - name: LAT
-        uses: 'selfagency/slackfeedbot@v1.2.7'
+        uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
       - name: WaPo
-        uses: 'selfagency/slackfeedbot@v1.2.7'
+        uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}

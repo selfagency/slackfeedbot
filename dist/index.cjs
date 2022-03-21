@@ -30134,7 +30134,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
           const { document: document2 } = parseHTML("<div></div>");
           const desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|")}`;
+          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|").replace(/\*{2}/g, "*").replace(/\[(.+)\]\((.+)\)/g, "<$2|$1>")}`;
         }
       }
       if (item == null ? void 0 : item.title) {
