@@ -38,7 +38,12 @@ const genPayload = async (
             ' '
           );
           const markdown = converter.makeMarkdown(desc, document);
-          text += `${markdown.replace(/\\-/g, '-').replace(/\\\|/g, '|')}`;
+
+          text += `${markdown
+            .replace(/\\-/g, '-')
+            .replace(/\\\|/g, '|')
+            .replace(/\*{2}/g, '*')
+            .replace(/\[(.+)\]\((.+)\)/g, '<$2|$1>')}`;
         }
       }
 
