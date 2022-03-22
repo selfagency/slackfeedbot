@@ -16,11 +16,11 @@ Push RSS feed updates to Slack via GitHub Actions
 
 ## Options
 
-\* denotes a required field. Must specify `cache_dir` _or_ `interval`.
+Required fields denoted with `*`. Must specify `cache_dir` (which requires separate use of [actions/cache](https://github.com/actions/cache) or a similar solution) _or_ `interval`.
 
 - `rss`*: The RSS feed URL.
 - `slack_webhook`\*: The Slack webhook URL (this can and probably should be a repository or organization secret).
-- `cache_dir`\*: The folder in which to cache feed data (requires separate use of [actions/cache](https://github.com/actions/cache) or a similar solution), which prevents publishing duplicates, or _alternately_...
+- `cache_dir`\*: The folder in which to cache feed data, which prevents publishing duplicates, or _alternately_...
 - `interval`\*: The number of minutes between runs of the parent workflow, as specified in the `cron` section of the `schedule` workflow trigger (may publish duplicates due to post pinning).
 - `unfurl`: Shows the [Open Graph](https://ogp.me/) preview for RSS items instead of this action's display format. Set to `false` because it's kind of flaky and non-customizable. Use the below settings instead to customize display.
 - `show_desc`: Show the post description. Defaults to `true`.
