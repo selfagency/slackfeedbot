@@ -14,6 +14,23 @@ Push RSS feed updates to Slack via GitHub Actions
 
 4. Create a new workflow in your desired repository (e.g. `.github/workflows/slackfeedbot.yml`) and drop in the follwing:
 
+```
+name: SlackFeedBot
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+jobs:
+  rss-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: NYT
+        uses: 'selfagency/slackfeedbot@v1.2.8'
+        with:
+          rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          interval: 15
+```
+
 ## Options
 
 Required fields denoted with `*`. Must specify `cache_dir` (which requires separate use of [actions/cache](https://github.com/actions/cache) or a similar solution) _or_ `interval`.
