@@ -2,7 +2,7 @@
 
 Push RSS feed updates to Slack via GitHub Actions
 
-![Sample output](https://user-images.githubusercontent.com/2541728/158734324-de6429eb-8a21-4ca2-9959-e8eb673a42e6.png)
+![Sample output](https://user-images.githubusercontent.com/2541728/159546371-a1b61c2f-8fc8-40f3-b888-a8ae0e85507f.png)
 
 ## How to use this Action
 
@@ -12,27 +12,25 @@ Push RSS feed updates to Slack via GitHub Actions
 
 ![Sample configuration](https://user-images.githubusercontent.com/2541728/158685833-7a221c22-c5a9-4221-8e93-0003f89a92a8.png)
 
-4. Create a new workflow in your desired repository (e.g. `.github/workflows/slackfeedbot.yml`) and drop in the follwing, where:
+4. Create a new workflow in your desired repository (e.g. `.github/workflows/slackfeedbot.yml`) and drop in the follwing:
 
-   - `rss`: An RSS feed URL.
-   - `slack_webhook`: The URL of your Slack webhook (this can and probably
-     should be a repository or organization secret).
-   - `cache_dir`: The folder in which you want to cache RSS data to prevent
-     publishing duplicates (e.g., `./slackfeedbot-cache`), or alternately...
-   - `interval`: The number of minutes between runs of the parent workflow, as
-     specified in the `cron` section of the `schedule` workflow trigger (may
-     publish duplicates due to post pinning).
-   - `unfurl`: Tells Slack to show the [Open Graph](https://ogp.me/) preview.
-     Defaults to `false` because it's kind of flaky. Not customizable. Use
-     the below settings for customizd display.
-   - `show_desc`: Whether to show the post description. Defaults to `true`.
-   - `show_img`: Whether to show the post image. Defaults to `true`.
-   - `show_date`: Whether to show the post date. Defaults to `true`.
-   - `show_link`: Whether to show the Read more link, linking back to the post. Defaults to `true`.
+## Options
+
+\* denotes a required field. Must specify `cache_dir` _or_ `interval`.
+
+- `rss`*: The RSS feed URL.
+- `slack_webhook`\*: The Slack webhook URL (this can and probably should be a repository or organization secret).
+- `cache_dir`\*: The folder to cache RSS data (e.g., `./slackfeedbot-cache`), which prevents publishing duplicates, or _alternately_...
+- `interval`\*: The number of minutes between runs of the parent workflow, as specified in the `cron` section of the `schedule` workflow trigger (may publish duplicates due to post pinning).
+- `unfurl`: Shows the [Open Graph](https://ogp.me/) preview for RSS items instead of this action's display format. Set to `false` because it's kind of flaky and non-customizable. Use the below settings instead to customize display.
+- `show_desc`: Show the post description. Defaults to `true`.
+- `show_img`: Show the post image. Defaults to `true`.
+- `show_date`: Show the post date. Defaults to `true`.
+- `show_link`: Show the Read more link, linking back to the post. Defaults to `true`.
 
 ## Examples
 
-### With cache folder
+### With cache folder (recommended)
 
 Hashes and caches the post title + creation date to ensure no duplicates are posted.
 
@@ -97,28 +95,16 @@ jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate cache key
-        uses: actions/github-script@v6
-        id: generate-key
-        with:
-          script: |
-            core.setOutput('cache-key', new Date().valueOf())
-      - name: Retrieve cache
-        uses: actions/cache@v2
-        with:
-          path: ./slackfeedbot-cache
-          key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
-          restore-keys: feed-cache-
       - name: LAT
         uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          interval: 15
       - name: WaPo
         uses: 'selfagency/slackfeedbot@v1.2.8'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          interval: 15
 ```
