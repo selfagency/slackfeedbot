@@ -6,10 +6,10 @@ import type { Icons } from '../types.d';
 const getFeedImg = async (rssFeed: string): Promise<string | undefined> => {
   const url = new URL(rssFeed);
   const host = url.hostname
-    .replace('//status.', '//')
-    .replace('//feed.', '//')
-    .replace('//feeds.', '//')
-    .replace('//rss.', '//');
+    .replace(/^status\./, '')
+    .replace(/^feed\./, '')
+    .replace(/^feeds\./, '')
+    .replace(/^rss\./, '');
   core.debug(`Getting favicons for ${host}`);
 
   let favicon;

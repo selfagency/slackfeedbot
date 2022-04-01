@@ -30,6 +30,8 @@ jobs:
         uses: 'selfagency/slackfeedbot@dev'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
+          feed_name: 'Washington Post'
+          feed_image: 'https://www.washingtonpost.com/wp-stat/assets/favicons/touch-icon-iphone.png'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
@@ -68,31 +70,4 @@ jobs:
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           cache_dir: './slackfeedbot-cache'
         continue-on-error: true
-      - name: New Relic
-        uses: 'selfagency/slackfeedbot@dev'
-        with:
-          rss: 'https://status.newrelic.com/history.rss'
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
-        continue-on-error: true
-      - name: Fastly
-        uses: 'selfagency/slackfeedbot@dev'
-        with:
-          rss: 'https://status.fastly.com/history.rss'
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
-        continue-on-error: true
-      - name: 1Password
-        uses: 'selfagency/slackfeedbot@dev'
-        with:
-          rss: 'https://1password.statuspage.io/history.rss'
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
-        continue-on-error: true
-      - name: DataDog
-        uses: 'selfagency/slackfeedbot@dev'
-        with:
-          rss: 'https://status.datadoghq.com/history.rss'
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
-        continue-on-error: true
+

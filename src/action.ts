@@ -13,6 +13,8 @@ const run = async () => {
     // Parse inputs
     const slackWebhook = core.getInput('slack_webhook');
     const rssFeed = core.getInput('rss');
+    const feedName = core.getInput('feed_name');
+    const feedImg = core.getInput('feed_image');
     const cacheDir = core.getInput('cache_dir');
     const interval = core.getInput('interval').length > 0 ? parseInt(core.getInput('interval')) : undefined;
     const unfurl = core.getInput('unfurl').length > 0 ? core.getBooleanInput('unfurl') : false;
@@ -25,6 +27,8 @@ const run = async () => {
       `Processed inputs: ${JSON.stringify({
         slackWebhook,
         rssFeed,
+        feedName,
+        feedImg,
         cacheDir,
         interval,
         unfurl,
@@ -39,7 +43,18 @@ const run = async () => {
 
     if (filtered.length) {
       // Generate payload
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
+      const payload = await genPayload(
+        filtered,
+        unfiltered,
+        rssFeed,
+        feedName,
+        feedImg,
+        unfurl,
+        showDesc,
+        showImg,
+        showDate,
+        showLink
+      );
 
       // Send payload to Slack
       await slack(payload, slackWebhook);

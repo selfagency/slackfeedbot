@@ -17,6 +17,8 @@ const genPayload = async (
   filtered: RssFeedItem[],
   unfiltered: RssFeed,
   rssFeed: string,
+  feedName: string,
+  feedImg: string,
   unfurl: boolean,
   showDesc: boolean,
   showImg: boolean,
@@ -42,7 +44,7 @@ const genPayload = async (
           text += `${markdown
             .replace(/\\-/g, '-')
             .replace(/\\\|/g, '|')
-            .replace(/\*{2}/g, '*')
+            .replace(/\*{2,}/g, '*')
             .replace(/\[(.+)\]\((.+)\)/g, '<$2|$1>')}`;
         }
       }
@@ -102,8 +104,8 @@ const genPayload = async (
 
     const payload = {
       as_user: false,
-      username: unfiltered.title ? html2txt(unfiltered.title) : 'FeedBot',
-      icon_url: await getFeedImg(rssFeed),
+      username: feedName.length ? feedName : unfiltered.title ? html2txt(unfiltered.title) : 'FeedBot',
+      icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
       unfurl_links: unfurl,
       unfurl_media: unfurl,
       blocks

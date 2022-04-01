@@ -6,10 +6,16 @@ branding:
   color: 'orange'
 inputs:
   rss:
-    description: 'RSS Feed URL'
+    description: 'RSS feed URL'
     required: true
+  feed_name:
+    description: 'Feed name'
+    required: false
+  feed_image:
+    description: 'Feed image URL'
+    required: false
   slack_webhook:
-    description: 'Slack Webhook URL'
+    description: 'Slack webhook URL'
     required: true
   cache_dir:
     description: 'Cache folder'

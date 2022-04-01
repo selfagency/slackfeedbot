@@ -30101,7 +30101,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 var getFeedImg = async (rssFeed) => {
   var _a, _b;
   const url = new URL(rssFeed);
-  const host = url.hostname.replace("//status.", "//").replace("//feed.", "//").replace("//feeds.", "//").replace("//rss.", "//");
+  const host = url.hostname.replace(/^status\./, "").replace(/^feed\./, "").replace(/^feeds\./, "").replace(/^rss\./, "");
   import_core3.default.debug(`Getting favicons for ${host}`);
   let favicon;
   try {
@@ -30123,7 +30123,7 @@ var converter = new import_showdown.default.Converter();
 var html2txt = (0, import_html_to_text.compile)({
   wordwrap: 255
 });
-var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink) => {
+var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl, showDesc, showImg, showDate, showLink) => {
   try {
     const blocks = [];
     filtered.forEach((item) => {
@@ -30134,7 +30134,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
           const { document: document2 } = parseHTML("<div></div>");
           const desc = (0, import_striptags.default)(item.description.replace(/&gt;/g, ">").replace(/&lt;/g, "<"), ["p", "strong", "b", "em", "i", "a", "ul", "ol", "li"], " ");
           const markdown = converter.makeMarkdown(desc, document2);
-          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|").replace(/\*{2}/g, "*").replace(/\[(.+)\]\((.+)\)/g, "<$2|$1>")}`;
+          text += `${markdown.replace(/\\-/g, "-").replace(/\\\|/g, "|").replace(/\*{2,}/g, "*").replace(/\[(.+)\]\((.+)\)/g, "<$2|$1>")}`;
         }
       }
       if (item == null ? void 0 : item.title) {
@@ -30181,8 +30181,8 @@ var genPayload = async (filtered, unfiltered, rssFeed, unfurl, showDesc, showImg
     });
     const payload = {
       as_user: false,
-      username: unfiltered.title ? html2txt(unfiltered.title) : "FeedBot",
-      icon_url: await getFeedImg(rssFeed),
+      username: feedName.length ? feedName : unfiltered.title ? html2txt(unfiltered.title) : "FeedBot",
+      icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
       unfurl_links: unfurl,
       unfurl_media: unfurl,
       blocks
@@ -30247,6 +30247,8 @@ var run = async () => {
     validate();
     const slackWebhook = import_core7.default.getInput("slack_webhook");
     const rssFeed = import_core7.default.getInput("rss");
+    const feedName = import_core7.default.getInput("feed_name");
+    const feedImg = import_core7.default.getInput("feed_image");
     const cacheDir = import_core7.default.getInput("cache_dir");
     const interval = import_core7.default.getInput("interval").length > 0 ? parseInt(import_core7.default.getInput("interval")) : void 0;
     const unfurl = import_core7.default.getInput("unfurl").length > 0 ? import_core7.default.getBooleanInput("unfurl") : false;
@@ -30257,6 +30259,8 @@ var run = async () => {
     import_core7.default.debug(`Processed inputs: ${JSON.stringify({
       slackWebhook,
       rssFeed,
+      feedName,
+      feedImg,
       cacheDir,
       interval,
       unfurl,
@@ -30266,7 +30270,7 @@ var run = async () => {
     })}`);
     const { filtered, unfiltered, cached } = await getFeed(rssFeed, cacheDir, interval);
     if (filtered.length) {
-      const payload = await genPayload(filtered, unfiltered, rssFeed, unfurl, showDesc, showImg, showDate, showLink);
+      const payload = await genPayload(filtered, unfiltered, rssFeed, feedName, feedImg, unfurl, showDesc, showImg, showDate, showLink);
       await slack(payload, slackWebhook);
       if (cacheDir)
         await writeCache((unfiltered == null ? void 0 : unfiltered.title) || "", rssFeed, cacheDir, filtered, cached);

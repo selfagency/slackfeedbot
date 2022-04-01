@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1.2.8'
+        uses: 'selfagency/slackfeedbot@v1.2.9'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -35,7 +35,9 @@ jobs:
 
 Required fields denoted with `*`. Must specify `cache_dir` (which requires separate use of [actions/cache](https://github.com/actions/cache) or a similar solution) _or_ `interval`.
 
-- `rss`*: The RSS feed URL.
+- `rss`\*: The RSS feed URL.
+- `feed_name`: A title to override the RSS feed's own title.
+- `feed_image`: An image to override the RSS feed's default feed image.
 - `slack_webhook`\*: The Slack webhook URL (this can and probably should be a repository or organization secret).
 - `cache_dir`\*: The folder in which to cache feed data, which prevents publishing duplicates, or _alternately_...
 - `interval`\*: The number of minutes between runs of the parent workflow, as specified in the `cron` section of the `schedule` workflow trigger (may publish duplicates due to post pinning).
@@ -73,7 +75,7 @@ jobs:
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1.2.8'
+        uses: 'selfagency/slackfeedbot@v1.2.9'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -94,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: 'selfagency/slackfeedbot@v1.2.8'
+        uses: 'selfagency/slackfeedbot@v1.2.9'
         with:
           rss: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -113,13 +115,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: LAT
-        uses: 'selfagency/slackfeedbot@v1.2.8'
+        uses: 'selfagency/slackfeedbot@v1.2.9'
         with:
           rss: 'https://www.latimes.com/rss2.0.xml'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           interval: 15
       - name: WaPo
-        uses: 'selfagency/slackfeedbot@v1.2.8'
+        uses: 'selfagency/slackfeedbot@v1.2.9'
         with:
           rss: 'https://feeds.washingtonpost.com/rss/homepage'
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
