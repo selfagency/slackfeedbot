@@ -25,20 +25,20 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.9.1",
+    "@actions/core": "^1.11.1",
     "dayjs": "^1.11.0",
     "html-to-text": "^8.1.0",
     "linkedom": "^0.14.4",
     "node-fetch": "^3.2.10",
     "object-sha": "^2.0.6",
     "rss-to-json": "^2.1.1",
-    "showdown": "^2.0.3",
+    "showdown": "^2.1.0",
     "striptags": "^3.2.0"
   },
   "devDependencies": {
     "@types/html-to-text": "^8.1.0",
     "@types/node": "^17.0.21",
-    "@types/showdown": "^1.9.4",
+    "@types/showdown": "^2.0.6",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
     "esbuild": "^0.25.0",
