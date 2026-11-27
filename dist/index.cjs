@@ -50088,11 +50088,22 @@ var buildDiscordMessages = (filtered, unfiltered, opts) => {
 // src/lib/getfeed.ts
 var import_dayjs = __toESM(require_dayjs_min(), 1);
 var import_rss_parser = __toESM(require_rss_parser(), 1);
+var FEED_TIMEOUT_MS = 1e4;
 var parser = new import_rss_parser.default({
   customFields: {
     item: ["content:encoded"]
   }
 });
+var fetchFeed = async (rssFeed, timeoutMs) => {
+  const res = await fetch(rssFeed, {
+    headers: { "User-Agent": "slackfeedbot" },
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  if (!res.ok) {
+    throw new Error(`Feed request failed: ${res.status}`);
+  }
+  return res.text();
+};
 var toTimestamp = (item) => {
   const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
   return Number.isNaN(parsed) ? Date.now() : parsed;
@@ -50129,9 +50140,11 @@ var toFeed = (feed) => ({
   category: feed.category ?? [],
   items: feed.items.map(toItem)
 });
-var getFeed3 = async (rssFeed, cacheDir, interval) => {
+var getFeed3 = async (rssFeed, cacheDir, interval, timeoutMs = FEED_TIMEOUT_MS) => {
   debug(`Retrieving ${rssFeed}\u2026`);
-  const rss = toFeed(await parser.parseURL(rssFeed));
+  const rss = toFeed(
+    await parser.parseString(await fetchFeed(rssFeed, timeoutMs))
+  );
   debug(`Feed has ${rss.items?.length} items`);
   if (rss.items?.length) {
     let toSend = [];
@@ -50167,6 +50180,7 @@ var import_utc = __toESM(require_utc(), 1);
 
 // src/lib/feedimg.ts
 var STRIP_PREFIX_RE = /^(?:status|feeds?|rss)\./u;
+var FAVICON_TIMEOUT_MS = 1e4;
 var PREFERRED_SIZES = ["180x180", "144x144", "72x72"];
 var pickIcon = (icons) => {
   for (const size of PREFERRED_SIZES) {
@@ -50177,13 +50191,15 @@ var pickIcon = (icons) => {
   }
   return icons[0]?.src;
 };
-var getFeedImg = async (rssFeed, baseUrl = "https://favicongrabber.com") => {
+var getFeedImg = async (rssFeed, baseUrl = "https://favicongrabber.com", timeoutMs = FAVICON_TIMEOUT_MS) => {
   const url = new URL(rssFeed);
   const host = url.hostname.replace(STRIP_PREFIX_RE, "");
   debug(`Getting favicons for ${host}`);
   let favicon;
   try {
-    const res = await fetch(`${baseUrl}/api/grab/${host}`);
+    const res = await fetch(`${baseUrl}/api/grab/${host}`, {
+      signal: AbortSignal.timeout(timeoutMs)
+    });
     const icons = await res.json();
     debug(`Icons: ${JSON.stringify(icons)}`);
     if (icons?.icons) {

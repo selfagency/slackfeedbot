@@ -72,4 +72,23 @@ describe("getFeedImg", () => {
     const favicon = await getFeedImg("https://example.com/feed.xml", baseUrl);
     expect(favicon).toBeUndefined();
   });
+
+  it("times out slow favicon responses", async () => {
+    server = createServer(() => {
+      // Responds never; the client aborts at timeoutMs.
+    });
+    await new Promise<void>((resolve) => {
+      server?.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    baseUrl = `http://127.0.0.1:${port}`;
+
+    const favicon = await getFeedImg(
+      "https://example.com/feed.xml",
+      baseUrl,
+      50
+    );
+    expect(favicon).toBeUndefined();
+  });
 });

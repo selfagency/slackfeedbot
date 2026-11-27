@@ -37,7 +37,8 @@ interface RunDeps {
   getFeed: (
     rssFeed: string,
     cacheDir: string | undefined,
-    interval: number | undefined
+    interval: number | undefined,
+    timeoutMs?: number
   ) => Promise<{
     filtered: RssFeedItem[];
     unfiltered: RssFeed;

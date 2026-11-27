@@ -3,6 +3,8 @@ import type { Icons } from "../types.ts";
 
 const STRIP_PREFIX_RE = /^(?:status|feeds?|rss)\./u;
 
+const FAVICON_TIMEOUT_MS = 10_000;
+
 // Icon sizes to prefer, best first; falls back to whichever icon exists
 const PREFERRED_SIZES = ["180x180", "144x144", "72x72"];
 
@@ -19,7 +21,8 @@ const pickIcon = (icons: NonNullable<Icons["icons"]>): string | undefined => {
 // Gets the website's favicon
 const getFeedImg = async (
   rssFeed: string,
-  baseUrl = "https://favicongrabber.com"
+  baseUrl = "https://favicongrabber.com",
+  timeoutMs: number = FAVICON_TIMEOUT_MS
 ): Promise<string | undefined> => {
   const url = new URL(rssFeed);
   const host = url.hostname.replace(STRIP_PREFIX_RE, "");
@@ -27,7 +30,9 @@ const getFeedImg = async (
 
   let favicon: string | undefined;
   try {
-    const res = await fetch(`${baseUrl}/api/grab/${host}`);
+    const res = await fetch(`${baseUrl}/api/grab/${host}`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     const icons = (await res.json()) as Icons | undefined;
     core.debug(`Icons: ${JSON.stringify(icons)}`);
 

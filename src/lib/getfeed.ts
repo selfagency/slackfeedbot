@@ -4,11 +4,29 @@ import Parser from "rss-parser";
 import type { RssFeed, RssFeedItem } from "../types.ts";
 import { checkCache, readCache } from "./cache.ts";
 
+const FEED_TIMEOUT_MS = 10_000;
+
 const parser = new Parser({
   customFields: {
     item: ["content:encoded"],
   },
 });
+
+// Fetches the feed text with our own timeout and UA handling; parseString
+// keeps rss-parser out of its legacy url.parse code path.
+const fetchFeed = async (
+  rssFeed: string,
+  timeoutMs: number
+): Promise<string> => {
+  const res = await fetch(rssFeed, {
+    headers: { "User-Agent": "slackfeedbot" },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) {
+    throw new Error(`Feed request failed: ${res.status}`);
+  }
+  return res.text();
+};
 
 const toTimestamp = (item: Parser.Item): number => {
   const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
@@ -62,7 +80,8 @@ const toFeed = (feed: Parser.Output<Parser.Item>): RssFeed => ({
 const getFeed = async (
   rssFeed: string,
   cacheDir: string | undefined,
-  interval: number | undefined
+  interval: number | undefined,
+  timeoutMs: number = FEED_TIMEOUT_MS
 ): Promise<{
   filtered: RssFeedItem[];
   unfiltered: RssFeed;
@@ -70,7 +89,9 @@ const getFeed = async (
 }> => {
   core.debug(`Retrieving ${rssFeed}…`);
 
-  const rss = toFeed(await parser.parseURL(rssFeed));
+  const rss = toFeed(
+    await parser.parseString(await fetchFeed(rssFeed, timeoutMs))
+  );
   core.debug(`Feed has ${rss.items?.length} items`);
 
   if (rss.items?.length) {

@@ -206,4 +206,35 @@ describe("getFeed", () => {
     expect(filtered[0].created ?? 0).toBeGreaterThanOrEqual(before);
     expect(filtered[0].created ?? 0).toBeLessThanOrEqual(Date.now());
   });
+
+  it("rejects non-200 feed responses with the status code", async () => {
+    server = createServer((_req, res) => {
+      res.writeHead(404, { "content-type": "text/plain" });
+      res.end("nope");
+    });
+    await new Promise<void>((resolve) => {
+      server?.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    feedUrl = `http://127.0.0.1:${port}/feed`;
+
+    await expect(getFeed(feedUrl, undefined, undefined)).rejects.toThrowError(
+      "Feed request failed: 404"
+    );
+  });
+
+  it("rejects feeds that exceed the timeout", async () => {
+    server = createServer(() => {
+      // Responds never; the client aborts at timeoutMs.
+    });
+    await new Promise<void>((resolve) => {
+      server?.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    feedUrl = `http://127.0.0.1:${port}/feed`;
+
+    await expect(getFeed(feedUrl, undefined, undefined, 50)).rejects.toThrow();
+  });
 });
