@@ -53,4 +53,41 @@ interface Payload {
   username?: string;
 }
 
-export type { Block, BlockText, Icons, Payload, RssFeed, RssFeedItem };
+interface DiscordEmbed {
+  description?: string;
+  footer?: { text: string };
+  image?: { url: string };
+  timestamp?: string;
+  title?: string;
+  url?: string;
+}
+
+interface DiscordPayload {
+  allowed_mentions: { parse: string[] };
+  avatar_url?: string;
+  content?: string;
+  embeds: DiscordEmbed[];
+  username?: string;
+}
+
+type DeliveryPlatform = "slack" | "discord";
+
+interface DeliverResult {
+  body: string;
+  ok: boolean;
+  platform: DeliveryPlatform;
+  status: number;
+}
+
+export type {
+  Block,
+  BlockText,
+  DeliverResult,
+  DeliveryPlatform,
+  DiscordEmbed,
+  DiscordPayload,
+  Icons,
+  Payload,
+  RssFeed,
+  RssFeedItem,
+};

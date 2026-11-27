@@ -16,10 +16,13 @@ inputs:
     required: false
   slack_webhook:
     description: "Slack webhook URL"
-    required: true
+    required: false
+  discord_webhook:
+    description: "Discord webhook URL"
+    required: false
   cache_dir:
     description: "Cache folder"
-    required: true
+    required: false
   interval:
     description: "Minutes between workflow runs"
     required: false

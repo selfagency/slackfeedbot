@@ -19147,6 +19147,38 @@ var require_undici = __commonJS({
   }
 });
 
+// node_modules/linkedom/commonjs/canvas-shim.cjs
+var require_canvas_shim = __commonJS({
+  "node_modules/linkedom/commonjs/canvas-shim.cjs"(exports2, module2) {
+    var Canvas2 = class {
+      constructor(width, height) {
+        this.width = width;
+        this.height = height;
+      }
+      getContext() {
+        return null;
+      }
+      toDataURL() {
+        return "";
+      }
+    };
+    module2.exports = {
+      createCanvas: (width, height) => new Canvas2(width, height)
+    };
+  }
+});
+
+// node_modules/linkedom/commonjs/canvas.cjs
+var require_canvas = __commonJS({
+  "node_modules/linkedom/commonjs/canvas.cjs"(exports2, module2) {
+    try {
+      module2.exports = require("canvas");
+    } catch (fallback) {
+      module2.exports = require_canvas_shim();
+    }
+  }
+});
+
 // node_modules/dayjs/dayjs.min.js
 var require_dayjs_min = __commonJS({
   "node_modules/dayjs/dayjs.min.js"(exports2, module2) {
@@ -26309,38 +26341,6 @@ var require_utc = __commonJS({
   }
 });
 
-// node_modules/linkedom/commonjs/canvas-shim.cjs
-var require_canvas_shim = __commonJS({
-  "node_modules/linkedom/commonjs/canvas-shim.cjs"(exports2, module2) {
-    var Canvas2 = class {
-      constructor(width, height) {
-        this.width = width;
-        this.height = height;
-      }
-      getContext() {
-        return null;
-      }
-      toDataURL() {
-        return "";
-      }
-    };
-    module2.exports = {
-      createCanvas: (width, height) => new Canvas2(width, height)
-    };
-  }
-});
-
-// node_modules/linkedom/commonjs/canvas.cjs
-var require_canvas = __commonJS({
-  "node_modules/linkedom/commonjs/canvas.cjs"(exports2, module2) {
-    try {
-      module2.exports = require("canvas");
-    } catch (fallback) {
-      module2.exports = require_canvas_shim();
-    }
-  }
-});
-
 // node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
 
@@ -26815,21 +26815,34 @@ function info(message) {
 }
 
 // src/action.ts
+var deliverAll = async (messages, deliver2, discordWebhook, deliveries) => {
+  const [next, ...rest] = messages;
+  if (next === void 0) {
+    return;
+  }
+  deliveries.push(await deliver2(next, discordWebhook, { platform: "discord" }));
+  await deliverAll(rest, deliver2, discordWebhook, deliveries);
+};
 var run = async (deps) => {
   const {
     validate: check,
     getInput: getInput2,
     getBooleanInput: getBooleanInput2,
     getFeed: read2,
-    genPayload: build,
-    slack: post,
+    genPayload: buildSlack,
+    discord: buildDiscord,
+    deliver: deliver2,
     writeCache: save
   } = deps;
   try {
     check();
     const slackWebhook = getInput2("slack_webhook");
+    const discordWebhook = getInput2("discord_webhook");
     if (slackWebhook.length > 0) {
       setSecret(slackWebhook);
+    }
+    if (discordWebhook.length > 0) {
+      setSecret(discordWebhook);
     }
     const rssFeed = getInput2("rss");
     const feedName = getInput2("feed_name");
@@ -26843,7 +26856,6 @@ var run = async (deps) => {
     const showImg = getInput2("show_img").length > 0 ? getBooleanInput2("show_img") : true;
     debug(
       `Processed inputs: ${JSON.stringify({
-        slackWebhook,
         rssFeed,
         feedName,
         feedImg,
@@ -26860,8 +26872,13 @@ var run = async (deps) => {
       cacheDir,
       interval
     );
-    if (filtered.length) {
-      const payload = await build(
+    if (filtered.length === 0) {
+      info("No new items found");
+      return;
+    }
+    const deliveries = [];
+    if (slackWebhook.length > 0) {
+      const payload = await buildSlack(
         filtered,
         unfiltered,
         rssFeed,
@@ -26873,12 +26890,31 @@ var run = async (deps) => {
         showDate,
         showLink
       );
-      await post(payload, slackWebhook);
-      if (cacheDir) {
-        await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
-      }
-    } else {
-      info("No new items found");
+      deliveries.push(
+        await deliver2(payload, slackWebhook, { platform: "slack" })
+      );
+    }
+    if (discordWebhook.length > 0) {
+      const messages = buildDiscord(filtered, unfiltered, {
+        feedName,
+        feedImg,
+        unfurl,
+        showDesc,
+        showImg,
+        showDate
+      });
+      await deliverAll(messages, deliver2, discordWebhook, deliveries);
+    }
+    const failures = deliveries.filter((result) => !result.ok);
+    if (failures.length > 0) {
+      const detail = failures.map(
+        (failure) => `${failure.platform} ${failure.status}: ${failure.body.slice(0, 200)}`
+      ).join("; ");
+      setFailed(`Delivery failed \u2014 ${detail}`);
+      return;
+    }
+    if (cacheDir) {
+      await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
     }
   } catch (err) {
     debug("Operation failed due to error");
@@ -26976,85 +27012,58 @@ var writeCache = async (feedTitle, rssFeed, cacheDir, filtered, cached) => {
   }
 };
 
-// src/lib/getfeed.ts
-var import_dayjs = __toESM(require_dayjs_min(), 1);
-var import_rss_parser = __toESM(require_rss_parser(), 1);
-var parser = new import_rss_parser.default({
-  customFields: {
-    item: ["content:encoded"]
-  }
+// src/lib/deliver.ts
+var MAX_ATTEMPTS = 3;
+var RETRY_FLOOR_MS = 1e3;
+var defaultSleep = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms);
 });
-var toTimestamp = (item) => {
-  const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
-  return Number.isNaN(parsed) ? Date.now() : parsed;
-};
-var toHtml = (item) => {
-  const record = item;
-  return record["content:encoded"] ?? item.content ?? record.description ?? record.contentSnippet;
-};
-var toImage = (item) => {
-  const { itunes } = item;
-  if (itunes?.image) {
-    return itunes.image;
+var retryAfterMs = (res) => {
+  const header = res.headers.get("retry-after");
+  if (header === null) {
+    return void 0;
   }
-  const { enclosure } = item;
-  if (enclosure?.url && (enclosure.type ?? "").startsWith("image/")) {
-    return enclosure.url;
+  const seconds = Number(header);
+  if (Number.isNaN(seconds)) {
+    return void 0;
   }
-  return void 0;
+  return Math.max(RETRY_FLOOR_MS, Math.ceil(seconds * 1e3));
 };
-var toItem = (item) => ({
-  title: item.title,
-  description: toHtml(item),
-  link: item.link,
-  image: toImage(item),
-  published: toTimestamp(item),
-  created: toTimestamp(item),
-  category: item.categories ?? []
-});
-var toFeed = (feed) => ({
-  title: feed.title,
-  description: feed.description,
-  link: feed.link,
-  image: feed.image?.url,
-  category: feed.category ?? [],
-  items: feed.items.map(toItem)
-});
-var getFeed = async (rssFeed, cacheDir, interval) => {
-  debug(`Retrieving ${rssFeed}\u2026`);
-  const rss = toFeed(await parser.parseURL(rssFeed));
-  debug(`Feed has ${rss.items?.length} items`);
-  if (rss.items?.length) {
-    let toSend = [];
-    let cached = [];
-    if (cacheDir) {
-      debug("Retrieving previously cached entries\u2026");
-      try {
-        cached = await readCache(rssFeed, cacheDir);
-        toSend = (await checkCache(rss, cached)).filter(
-          (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"))
-        );
-      } catch (err) {
-        debug(err instanceof Error ? err.message : String(err));
-        toSend = rss.items.filter(
-          (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"))
-        );
+var isOk = (platform2, status, body) => {
+  if (platform2 === "slack") {
+    return status === 200 && body === "ok";
+  }
+  return status === 204 || status === 200;
+};
+var deliver = (payload, webhook, options) => {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const sleep = options.sleep ?? defaultSleep;
+  const attempt = async (n) => {
+    const res = await fetchImpl(webhook, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Accept: "application/json"
       }
-    } else if (interval) {
-      debug(`Selecting items posted in the last ${interval} minutes\u2026`);
-      toSend = rss.items.filter(
-        (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(interval, "minute"))
-      );
+    });
+    const body = await res.text();
+    if (res.status === 429 && n < MAX_ATTEMPTS) {
+      const wait = retryAfterMs(res);
+      if (wait !== void 0) {
+        await sleep(wait);
+        return attempt(n + 1);
+      }
     }
-    return { filtered: toSend, unfiltered: rss, cached };
-  }
-  info("No feed items found");
-  return { filtered: [], unfiltered: rss, cached: [] };
+    return {
+      platform: options.platform,
+      ok: isOk(options.platform, res.status, body),
+      status: res.status,
+      body
+    };
+  };
+  return attempt(1);
 };
-
-// src/lib/payload.ts
-var import_dayjs2 = __toESM(require_dayjs_min(), 1);
-var import_utc = __toESM(require_utc(), 1);
 
 // node_modules/domelementtype/lib/esm/index.js
 var esm_exports = {};
@@ -28690,12 +28699,12 @@ __export(esm_exports3, {
   DomHandler: () => DomHandler,
   DomUtils: () => esm_exports2,
   ElementType: () => esm_exports,
-  Parser: () => Parser2,
+  Parser: () => Parser,
   QuoteType: () => QuoteType,
   Tokenizer: () => Tokenizer,
   createDocumentStream: () => createDocumentStream,
   createDomStream: () => createDomStream,
-  getFeed: () => getFeed2,
+  getFeed: () => getFeed,
   parseDOM: () => parseDOM,
   parseDocument: () => parseDocument,
   parseFeed: () => parseFeed
@@ -29967,7 +29976,7 @@ var htmlIntegrationElements = /* @__PURE__ */ new Set([
   "title"
 ]);
 var reNameEnd = /\s|\//;
-var Parser2 = class {
+var Parser = class {
   constructor(cbs, options = {}) {
     var _a3, _b, _c, _d, _e, _f;
     this.options = options;
@@ -30338,7 +30347,7 @@ __export(esm_exports2, {
   getElementsByClassName: () => getElementsByClassName,
   getElementsByTagName: () => getElementsByTagName,
   getElementsByTagType: () => getElementsByTagType,
-  getFeed: () => getFeed2,
+  getFeed: () => getFeed,
   getInnerHTML: () => getInnerHTML,
   getName: () => getName,
   getOuterHTML: () => getOuterHTML,
@@ -31522,7 +31531,7 @@ function uniqueSort(nodes) {
 }
 
 // node_modules/domutils/lib/esm/feeds.js
-function getFeed2(doc) {
+function getFeed(doc) {
   const feedRoot = getOneElement(isValidFeed, doc);
   return !feedRoot ? null : feedRoot.name === "feed" ? getAtomFeed(feedRoot) : getRssFeed(feedRoot);
 }
@@ -31647,7 +31656,7 @@ function isValidFeed(value) {
 // node_modules/htmlparser2/dist/esm/index.js
 function parseDocument(data, options) {
   const handler4 = new DomHandler(void 0, options);
-  new Parser2(handler4, options).end(data);
+  new Parser(handler4, options).end(data);
   return handler4.root;
 }
 function parseDOM(data, options) {
@@ -31655,15 +31664,15 @@ function parseDOM(data, options) {
 }
 function createDocumentStream(callback, options, elementCallback) {
   const handler4 = new DomHandler((error3) => callback(error3, handler4.root), options, elementCallback);
-  return new Parser2(handler4, options);
+  return new Parser(handler4, options);
 }
 function createDomStream(callback, options, elementCallback) {
   const handler4 = new DomHandler(callback, options, elementCallback);
-  return new Parser2(handler4, options);
+  return new Parser(handler4, options);
 }
 var parseFeedDefaultOptions = { xmlMode: true };
 function parseFeed(feed, options = parseFeedDefaultOptions) {
-  return getFeed2(parseDOM(feed, options));
+  return getFeed(parseDOM(feed, options));
 }
 
 // node_modules/deepmerge-ts/dist/index.mjs
@@ -33943,7 +33952,7 @@ var CustomElementRegistry = class {
 };
 
 // node_modules/linkedom/esm/shared/parse-from-string.js
-var { Parser: Parser3 } = esm_exports3;
+var { Parser: Parser2 } = esm_exports3;
 var notParsing = true;
 var append2 = (self2, node, active) => {
   const end = self2[END];
@@ -33968,7 +33977,7 @@ var parseFromString = (document, isHTML, markupLanguage) => {
   let ownerSVGElement = null;
   let parsingCData = false;
   notParsing = false;
-  const content = new Parser3({
+  const content = new Parser2({
     // <!DOCTYPE ...>
     onprocessinginstruction(name2, data) {
       if (name2.toLowerCase() === "!doctype")
@@ -35425,7 +35434,7 @@ __export(dist_exports2, {
   getElementsByClassName: () => getElementsByClassName2,
   getElementsByTagName: () => getElementsByTagName2,
   getElementsByTagType: () => getElementsByTagType2,
-  getFeed: () => getFeed3,
+  getFeed: () => getFeed2,
   getInnerHTML: () => getInnerHTML2,
   getName: () => getName2,
   getOuterHTML: () => getOuterHTML2,
@@ -35814,7 +35823,7 @@ function innerText2(node) {
 }
 
 // node_modules/css-select/node_modules/domutils/dist/feeds.js
-function getFeed3(document) {
+function getFeed2(document) {
   const feedRoot = getOneElement2(isValidFeed2, document);
   return feedRoot ? feedRoot.name === "feed" ? getAtomFeed2(feedRoot) : getRssFeed2(feedRoot) : null;
 }
@@ -46529,7 +46538,7 @@ function isCustomPropertyDeclaration(prelude) {
   const secondNonWs = prelude[idx++];
   return firstNonWs.type === "ident" && firstNonWs.value.startsWith("--") && secondNonWs.type === "colon";
 }
-var Parser4 = class Parser5 {
+var Parser3 = class Parser4 {
   tokens;
   errors = [];
   declaredNamespaces = /* @__PURE__ */ new Set();
@@ -46557,7 +46566,7 @@ var Parser4 = class Parser5 {
   getAtRuleHandler(name2) {
     if (MARGIN_RULE_NAMES.has(name2)) return (parser2, rule, block) => block ? parser2.handleMarginRule(rule, block) : null;
     if (name2 === "keyframes" || name2.endsWith("-keyframes")) return (parser2, rule, block) => block ? parser2.handleKeyframesRule(rule, block) : null;
-    return Parser5.AT_RULE_HANDLERS[name2];
+    return Parser4.AT_RULE_HANDLERS[name2];
   }
   static NESTED_GROUP_AT_RULES = /* @__PURE__ */ new Set("media,supports,container,layer,scope,starting-style,keyframes,property,counter-style,font-feature-values,view-transition,position-try".split(","));
   isSupportedAtRule(name2, nested = false) {
@@ -46568,7 +46577,7 @@ var Parser4 = class Parser5 {
     if (MARGIN_RULE_NAMES.has(lower)) return true;
     if (nested) {
       if (lower.endsWith("-keyframes")) return true;
-      return Parser5.NESTED_GROUP_AT_RULES.has(lower);
+      return Parser4.NESTED_GROUP_AT_RULES.has(lower);
     }
     return true;
   }
@@ -46662,7 +46671,7 @@ var Parser4 = class Parser5 {
   parseRule(ruleString) {
     const errors = [];
     const tokens = tokenize(ruleString, false, errors);
-    const parser2 = new Parser5(tokens, this.options);
+    const parser2 = new Parser4(tokens, this.options);
     parser2.errors.push(...errors);
     const rule = parser2.consumeRule();
     parser2.ensureEOF();
@@ -47248,7 +47257,7 @@ var Parser4 = class Parser5 {
         if (next.type === "EOF" || next.type === "}" || next.type === "semicolon") return true;
         if (next.type === "simple-block" && next.associatedToken?.type === "{") {
           const selectorCandidate = serialize2(lookaheadTokens).trim();
-          return Parser5.parseSelectorAST(selectorCandidate, {
+          return Parser4.parseSelectorAST(selectorCandidate, {
             allowVendorPseudos: Boolean(this.options.allowVendorPseudos),
             allowUnknownPseudos: Boolean(this.options.allowUnknownPseudos)
           }) === null;
@@ -47308,7 +47317,7 @@ var Parser4 = class Parser5 {
     if (name2.toLowerCase() === "unicode-range") {
       const text = getOriginalText(declValue);
       const errors = [];
-      const reParser = new Parser5(tokenize(text, true, errors));
+      const reParser = new Parser4(tokenize(text, true, errors));
       reParser.errors.push(...errors);
       const reParsed = reParser.parseComponentValues();
       if (!isValidUnicodeRangeValue(reParsed)) return null;
@@ -47405,7 +47414,7 @@ var Parser4 = class Parser5 {
     if (isNested) {
       selectorText = this.normalizeNestedSelector(prelude);
       if (selectorText === "") return null;
-      selectorAST = Parser5.parseSelectorAST(selectorText, {
+      selectorAST = Parser4.parseSelectorAST(selectorText, {
         declaredNamespaces: this.declaredNamespaces,
         allowRelative: true,
         allowVendorPseudos: Boolean(this.options.allowVendorPseudos),
@@ -47446,11 +47455,11 @@ var Parser4 = class Parser5 {
     const isRelative = isOptionsObj ? declaredNamespacesOrOptions.allowRelative ?? false : allowRelative;
     const vendorPseudos = isOptionsObj ? declaredNamespacesOrOptions.allowVendorPseudos ?? false : allowVendorPseudos;
     const unknownPseudos = isOptionsObj ? declaredNamespacesOrOptions.allowUnknownPseudos ?? false : false;
-    const parser2 = new Parser5(tokenize(text), {
+    const parser2 = new Parser4(tokenize(text), {
       allowVendorPseudos: vendorPseudos,
       allowUnknownPseudos: unknownPseudos
     });
-    const prelude = Parser5.#consumeSelectorTokens(parser2);
+    const prelude = Parser4.#consumeSelectorTokens(parser2);
     if (prelude === null) return null;
     try {
       return new SelectorParser(prelude, {
@@ -47534,23 +47543,23 @@ var Parser4 = class Parser5 {
     if (this.nextToken.type !== "EOF") throw new DOMException("Syntax error", "SyntaxError");
   }
   static parseSelector(text) {
-    const prelude = Parser5.#consumeSelectorTokens(new Parser5(tokenize(text)));
+    const prelude = Parser4.#consumeSelectorTokens(new Parser4(tokenize(text)));
     if (prelude === null) return null;
     return serialize2(prelude).trim() || null;
   }
   static parseRuleText(text) {
-    const parser2 = new Parser5(tokenize(text), { source: text });
+    const parser2 = new Parser4(tokenize(text), { source: text });
     const rule = parser2.consumeRule();
     if (!rule) throw new DOMException("Syntax error", "SyntaxError");
     parser2.ensureEOF();
     return rule;
   }
   static parseStyleSheetText(text) {
-    return new Parser5(tokenize(text), { source: text }).consumeListOfRules(true);
+    return new Parser4(tokenize(text), { source: text }).consumeListOfRules(true);
   }
 };
 function parseRuleInBlockText(text, nested = true, inScope = false) {
-  const parser2 = new Parser4(tokenize(`{ ${text} }`));
+  const parser2 = new Parser3(tokenize(`{ ${text} }`));
   if (inScope) parser2.scopeContextDepth = 1;
   const block = parser2.consumeBlock(parser2.consumeToken());
   const contents = parser2.consumeBlockContents(new ArrayComponentValueStream(block.value), inScope ? true : nested, inScope ? false : nested, inScope);
@@ -47584,7 +47593,7 @@ function validateDeclarationValue(values, isTopLevel = true, isCustomProperty = 
   return true;
 }
 function parseRule(text) {
-  return Parser4.parseRuleText(text);
+  return Parser3.parseRuleText(text);
 }
 function parseRuleInBlock(text, nested = true) {
   return parseRuleInBlockText(text, nested);
@@ -47697,27 +47706,27 @@ function isValidUnicodeRangeValue(values) {
   return assembleUnicodeRanges(values) !== null;
 }
 function parseStyleAttribute(tokens) {
-  return new Parser4(tokens).parseStyleAttribute();
+  return new Parser3(tokens).parseStyleAttribute();
 }
 function consumeRule(tokens) {
-  return new Parser4(tokens).consumeRule();
+  return new Parser3(tokens).consumeRule();
 }
 function consumeListOfRules(tokens, topLevel, options) {
-  return new Parser4(tokens, options).consumeListOfRules(topLevel);
+  return new Parser3(tokens, options).consumeListOfRules(topLevel);
 }
 function parseComponentValues(tokens, errors) {
-  const p = new Parser4(tokens);
+  const p = new Parser3(tokens);
   const res = p.parseComponentValues();
   if (errors) errors.push(...p.errors);
   return res;
 }
-Parser4.parseSelector;
-var parseSelectorAST = Parser4.parseSelectorAST;
+Parser3.parseSelector;
+var parseSelectorAST = Parser3.parseSelectorAST;
 function validateCustomPropertyValue(values) {
   return validateDeclarationValue(values, true, true);
 }
 function parse3(css, options) {
-  return new Parser4(tokenize(css), {
+  return new Parser3(tokenize(css), {
     source: css,
     ...options
   }).parseStyleSheet();
@@ -49928,6 +49937,212 @@ function Document4() {
 }
 setPrototypeOf(Document4, Document2).prototype = Document2.prototype;
 
+// src/lib/markdown.ts
+var html2txt = compile({
+  wordwrap: 255
+});
+var escapeSlack = (text) => text.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
+var sanitizeUrl = (url) => url.replace(/[<>\s]/gu, "").replace(/^[@!]/u, "");
+var plainTitle = (title) => html2txt(title);
+var SLACK = {
+  text: escapeSlack,
+  bold: (inner) => `*${inner}*`,
+  italic: (inner) => `_${inner}_`,
+  link: (label, href) => `<${sanitizeUrl(href)}|${label}>`
+};
+var DISCORD = {
+  text: (raw) => raw.replace(/<[@#&!][^>]*>/gu, ""),
+  bold: (inner) => `**${inner}**`,
+  italic: (inner) => `*${inner}*`,
+  link: (label, href) => `[${label}](${sanitizeUrl(href)})`
+};
+var isElement = (node) => node.nodeType === 1;
+var convertChildren = (node, rules) => Array.from(node?.childNodes ?? []).map((child) => convertNode(child, rules)).join("");
+var convertNode = (node, rules) => {
+  if (node.nodeType === 3) {
+    return rules.text(node.textContent ?? "");
+  }
+  if (!isElement(node)) {
+    return "";
+  }
+  const inner = convertChildren(node, rules);
+  switch (node.tagName.toLowerCase()) {
+    case "a":
+      return node.getAttribute("href") === null ? inner : rules.link(inner, node.getAttribute("href") ?? "");
+    case "strong":
+    case "b":
+      return rules.bold(inner);
+    case "em":
+    case "i":
+      return rules.italic(inner);
+    case "li":
+      return `\u2022 ${inner}
+`;
+    case "p":
+    case "div":
+      return `${inner}
+`;
+    case "br":
+      return "\n";
+    default:
+      return inner;
+  }
+};
+var htmlToMrkdwn = (html, flavor) => {
+  const rules = flavor === "slack" ? SLACK : DISCORD;
+  return convertChildren(
+    parseHTML(`<div>${html}</div>`).document.querySelector("div"),
+    rules
+  ).replace(/[ \t]+/gu, " ").replace(/\*{3,}/gu, "**").replace(/_{3,}/gu, "__").replace(/\n{3,}/gu, "\n\n").trim();
+};
+
+// src/lib/discord.ts
+var MAX_EMBEDS_PER_MESSAGE = 10;
+var MAX_MESSAGE_CHARS = 6e3;
+var MAX_EMBED_DESCRIPTION = 4096;
+var MAX_EMBED_TITLE = 256;
+var ELLIPSIS = "\u2026";
+var clamp = (text, max) => text.length > max ? `${text.slice(0, max - 1)}${ELLIPSIS}` : text;
+var embedChars = (embed) => (embed.title?.length ?? 0) + (embed.description?.length ?? 0);
+var toEmbed = (item, opts) => {
+  const embed = {};
+  if (item.title) {
+    embed.title = clamp(plainTitle(item.title), MAX_EMBED_TITLE);
+  }
+  if (!opts.unfurl && opts.showDesc && item.description) {
+    embed.description = clamp(
+      htmlToMrkdwn(item.description, "discord"),
+      MAX_EMBED_DESCRIPTION
+    );
+  }
+  if (item.link) {
+    embed.url = item.link;
+  }
+  if (opts.showDate && !opts.unfurl && item.created !== void 0 && item.created > 0) {
+    embed.timestamp = new Date(item.created).toISOString();
+  }
+  if (opts.showImg && !opts.unfurl && item.image) {
+    embed.image = { url: item.image };
+  }
+  return embed;
+};
+var chunkEmbeds = (embeds) => {
+  const chunks = [];
+  let current = [];
+  let chars = 0;
+  for (const embed of embeds) {
+    const size = embedChars(embed);
+    const wouldExceed = current.length >= MAX_EMBEDS_PER_MESSAGE || chars + size > MAX_MESSAGE_CHARS;
+    if (wouldExceed && current.length > 0) {
+      chunks.push(current);
+      current = [];
+      chars = 0;
+    }
+    current.push(embed);
+    chars += size;
+  }
+  if (current.length > 0) {
+    chunks.push(current);
+  }
+  return chunks;
+};
+var buildDiscordMessages = (filtered, unfiltered, opts) => {
+  const embeds = filtered.map((item) => toEmbed(item, opts));
+  const username = opts.feedName.length ? opts.feedName : unfiltered.title ? plainTitle(unfiltered.title) : "FeedBot";
+  const payload = {
+    username,
+    embeds: [],
+    allowed_mentions: { parse: [] }
+  };
+  if (opts.feedImg.length) {
+    payload.avatar_url = opts.feedImg;
+  }
+  return chunkEmbeds(embeds).map((chunk) => ({
+    ...payload,
+    embeds: chunk
+  }));
+};
+
+// src/lib/getfeed.ts
+var import_dayjs = __toESM(require_dayjs_min(), 1);
+var import_rss_parser = __toESM(require_rss_parser(), 1);
+var parser = new import_rss_parser.default({
+  customFields: {
+    item: ["content:encoded"]
+  }
+});
+var toTimestamp = (item) => {
+  const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
+  return Number.isNaN(parsed) ? Date.now() : parsed;
+};
+var toHtml = (item) => {
+  const record = item;
+  return record["content:encoded"] ?? item.content ?? record.description ?? record.contentSnippet;
+};
+var toImage = (item) => {
+  const { itunes } = item;
+  if (itunes?.image) {
+    return itunes.image;
+  }
+  const { enclosure } = item;
+  if (enclosure?.url && (enclosure.type ?? "").startsWith("image/")) {
+    return enclosure.url;
+  }
+  return void 0;
+};
+var toItem = (item) => ({
+  title: item.title,
+  description: toHtml(item),
+  link: item.link,
+  image: toImage(item),
+  published: toTimestamp(item),
+  created: toTimestamp(item),
+  category: item.categories ?? []
+});
+var toFeed = (feed) => ({
+  title: feed.title,
+  description: feed.description,
+  link: feed.link,
+  image: feed.image?.url,
+  category: feed.category ?? [],
+  items: feed.items.map(toItem)
+});
+var getFeed3 = async (rssFeed, cacheDir, interval) => {
+  debug(`Retrieving ${rssFeed}\u2026`);
+  const rss = toFeed(await parser.parseURL(rssFeed));
+  debug(`Feed has ${rss.items?.length} items`);
+  if (rss.items?.length) {
+    let toSend = [];
+    let cached = [];
+    if (cacheDir) {
+      debug("Retrieving previously cached entries\u2026");
+      try {
+        cached = await readCache(rssFeed, cacheDir);
+        toSend = (await checkCache(rss, cached)).filter(
+          (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"))
+        );
+      } catch (err) {
+        debug(err instanceof Error ? err.message : String(err));
+        toSend = rss.items.filter(
+          (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(1, "hour"))
+        );
+      }
+    } else if (interval) {
+      debug(`Selecting items posted in the last ${interval} minutes\u2026`);
+      toSend = rss.items.filter(
+        (item) => (0, import_dayjs.default)(item.created).isAfter((0, import_dayjs.default)().subtract(interval, "minute"))
+      );
+    }
+    return { filtered: toSend, unfiltered: rss, cached };
+  }
+  info("No feed items found");
+  return { filtered: [], unfiltered: rss, cached: [] };
+};
+
+// src/lib/payload.ts
+var import_dayjs2 = __toESM(require_dayjs_min(), 1);
+var import_utc = __toESM(require_utc(), 1);
+
 // src/lib/feedimg.ts
 var STRIP_PREFIX_RE = /^(?:status|feeds?|rss)\./u;
 var PREFERRED_SIZES = ["180x180", "144x144", "72x72"];
@@ -49962,57 +50177,17 @@ var getFeedImg = async (rssFeed, baseUrl = "https://favicongrabber.com") => {
 
 // src/lib/payload.ts
 import_dayjs2.default.extend(import_utc.default);
-var html2txt = compile({
-  wordwrap: 255
-});
-var escapeSlack = (text) => text.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
-var sanitizeUrl = (url) => url.replace(/[<>\s]/gu, "").replace(/^[@!]/u, "");
-var isElement = (node) => node.nodeType === 1;
-var convertChildren = (node) => Array.from(node?.childNodes ?? []).map(convertNode).join("");
-var convertNode = (node) => {
-  if (node.nodeType === 3) {
-    return escapeSlack(node.textContent ?? "");
-  }
-  if (!isElement(node)) {
-    return "";
-  }
-  const inner = convertChildren(node);
-  switch (node.tagName.toLowerCase()) {
-    case "a": {
-      const href = node.getAttribute("href");
-      return href ? `<${href}|${inner}>` : inner;
-    }
-    case "strong":
-    case "b":
-      return `*${inner}*`;
-    case "em":
-    case "i":
-      return `_${inner}_`;
-    case "li":
-      return `\u2022 ${inner}
-`;
-    case "p":
-    case "div":
-      return `${inner}
-`;
-    case "br":
-      return "\n";
-    default:
-      return inner;
-  }
-};
-var htmlToMrkdwn = (html) => convertChildren(parseHTML(`<div>${html}</div>`).document.querySelector("div")).replace(/[ \t]+/gu, " ").replace(/\*{2,}/gu, "*").replace(/_{2,}/gu, "_").replace(/\n{3,}/gu, "\n\n").trim();
 var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl, showDesc, showImg, showDate, showLink) => {
   const blocks = [];
-  filtered.forEach((item) => {
+  for (const item of filtered) {
     let text = "";
     if (!unfurl && item.description) {
-      text += htmlToMrkdwn(item.description);
+      text = htmlToMrkdwn(item.description, "slack");
     }
     if (item.title) {
       blocks.push({
         type: "header",
-        text: { type: "plain_text", text: escapeSlack(html2txt(item.title)) }
+        text: { type: "plain_text", text: escapeSlack(plainTitle(item.title)) }
       });
     }
     if (unfurl) {
@@ -50057,10 +50232,10 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
         });
       }
     }
-  });
+  }
   const payload = {
     as_user: false,
-    username: feedName.length ? feedName : unfiltered.title ? html2txt(unfiltered.title) : "FeedBot",
+    username: feedName.length ? feedName : unfiltered.title ? plainTitle(unfiltered.title) : "FeedBot",
     icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
     unfurl_links: unfurl,
     unfurl_media: unfurl,
@@ -50070,28 +50245,20 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
   return payload;
 };
 
-// src/lib/slack.ts
-var slack = async (payload, webhook) => {
-  const res = await fetch(webhook, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      Accept: "application/json"
-    }
-  });
-  debug(`Slack response: ${await res.text()}`);
-};
-
 // src/lib/validate.ts
 var validate = () => {
   debug("Validating inputs\u2026");
+  const rss = getInput("rss");
+  const slackWebhook = getInput("slack_webhook");
+  const discordWebhook = getInput("discord_webhook");
+  const interval = getInput("interval");
+  const cacheDir = getInput("cache_dir");
   debug(
     `Inputs: ${JSON.stringify({
-      slackWebhook: getInput("slack_webhook"),
-      rssFeed: getInput("rss"),
-      cacheDir: getInput("cache_dir"),
-      interval: getInput("interval"),
+      rssFeed: rss,
+      slackWebhook: slackWebhook.length > 0 ? "[set]" : "[unset]",
+      discordWebhook: discordWebhook.length > 0 ? "[set]" : "[unset]",
+      interval,
       unfurl: getInput("unfurl"),
       showDesc: getInput("show_desc"),
       showLink: getInput("show_link"),
@@ -50099,16 +50266,26 @@ var validate = () => {
       showImg: getInput("show_img")
     })}`
   );
-  if (getInput("rss").length === 0 || !getInput("rss").startsWith("http")) {
+  if (rss.length === 0 || !rss.startsWith("http")) {
     throw new Error("No feed or invalid feed specified");
   }
-  if (getInput("slack_webhook").length === 0 || !getInput("slack_webhook").startsWith("https")) {
+  const hasSlack = slackWebhook.length > 0;
+  const hasDiscord = discordWebhook.length > 0;
+  if (!(hasSlack || hasDiscord)) {
+    throw new Error("No Slack or Discord webhook specified");
+  }
+  if (hasSlack && !slackWebhook.startsWith("https")) {
     throw new Error("No Slack webhook or invalid webhook specified");
   }
-  if (getInput("interval").length === 0 && getInput("cache_dir").length === 0) {
+  if (hasDiscord && !(discordWebhook.startsWith("https://") && discordWebhook.includes("/api/webhooks/"))) {
+    throw new Error(
+      "Discord webhook must be an https://discord.com/api/webhooks/ URL"
+    );
+  }
+  if (interval.length === 0 && cacheDir.length === 0) {
     throw new Error("No interval or cache folder specified");
   }
-  if (getInput("interval").length > 0 && Number.parseInt(getInput("interval"), 10).toString() === "NaN") {
+  if (interval.length > 0 && Number.parseInt(interval, 10).toString() === "NaN") {
     throw new Error("Invalid interval specified");
   }
   if (getInput("unfurl").length > 0 && getBooleanInput("unfurl") && (getInput("show_desc").length > 0 || getInput("show_link").length > 0 || getInput("show_date").length > 0 || getInput("show_img").length > 0)) {
@@ -50122,9 +50299,10 @@ var main = async () => {
     validate,
     getInput,
     getBooleanInput,
-    getFeed,
+    getFeed: getFeed3,
     genPayload,
-    slack,
+    discord: buildDiscordMessages,
+    deliver,
     writeCache
   });
 };

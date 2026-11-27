@@ -1,8 +1,26 @@
 import * as core from "@actions/core";
-import type { Payload, RssFeed, RssFeedItem } from "./types.ts";
+import type { DeliverOptions } from "./lib/deliver.ts";
+import type { DiscordRenderOptions } from "./lib/discord.ts";
+import type {
+  DeliverResult,
+  DiscordPayload,
+  Payload,
+  RssFeed,
+  RssFeedItem,
+} from "./types.ts";
 
 // Collaborators are injected so the orchestration can be integration-tested.
 interface RunDeps {
+  deliver: (
+    payload: unknown,
+    webhook: string,
+    options: DeliverOptions
+  ) => Promise<DeliverResult>;
+  discord: (
+    filtered: RssFeedItem[],
+    unfiltered: RssFeed,
+    opts: DiscordRenderOptions
+  ) => DiscordPayload[];
   genPayload: (
     filtered: RssFeedItem[],
     unfiltered: RssFeed,
@@ -26,7 +44,6 @@ interface RunDeps {
     cached: string[];
   }>;
   getInput: (name: string) => string;
-  slack: (payload: Payload, webhook: string) => Promise<void>;
   validate: () => void;
   writeCache: (
     feedTitle: string,
@@ -37,14 +54,35 @@ interface RunDeps {
   ) => Promise<void>;
 }
 
+// Delivers Discord messages sequentially (ordered payloads, webhook rate
+// limits) without an awaited loop.
+const deliverAll = async (
+  messages: DiscordPayload[],
+  deliver: (
+    payload: unknown,
+    webhook: string,
+    options: DeliverOptions
+  ) => Promise<DeliverResult>,
+  discordWebhook: string,
+  deliveries: DeliverResult[]
+): Promise<void> => {
+  const [next, ...rest] = messages;
+  if (next === undefined) {
+    return;
+  }
+  deliveries.push(await deliver(next, discordWebhook, { platform: "discord" }));
+  await deliverAll(rest, deliver, discordWebhook, deliveries);
+};
+
 const run = async (deps: RunDeps): Promise<void> => {
   const {
     validate: check,
     getInput,
     getBooleanInput,
     getFeed: read,
-    genPayload: build,
-    slack: post,
+    genPayload: buildSlack,
+    discord: buildDiscord,
+    deliver,
     writeCache: save,
   } = deps;
 
@@ -52,8 +90,12 @@ const run = async (deps: RunDeps): Promise<void> => {
     check();
 
     const slackWebhook = getInput("slack_webhook");
+    const discordWebhook = getInput("discord_webhook");
     if (slackWebhook.length > 0) {
       core.setSecret(slackWebhook);
+    }
+    if (discordWebhook.length > 0) {
+      core.setSecret(discordWebhook);
     }
     const rssFeed = getInput("rss");
     const feedName = getInput("feed_name");
@@ -76,7 +118,6 @@ const run = async (deps: RunDeps): Promise<void> => {
 
     core.debug(
       `Processed inputs: ${JSON.stringify({
-        slackWebhook,
         rssFeed,
         feedName,
         feedImg,
@@ -95,8 +136,17 @@ const run = async (deps: RunDeps): Promise<void> => {
       interval
     );
 
-    if (filtered.length) {
-      const payload = await build(
+    if (filtered.length === 0) {
+      core.info("No new items found");
+      return;
+    }
+
+    // Deliver to every configured target; the cache is written only when
+    // ALL targets succeed, so failed deliveries are retried on the next run.
+    const deliveries: DeliverResult[] = [];
+
+    if (slackWebhook.length > 0) {
+      const payload = await buildSlack(
         filtered,
         unfiltered,
         rssFeed,
@@ -108,14 +158,37 @@ const run = async (deps: RunDeps): Promise<void> => {
         showDate,
         showLink
       );
+      deliveries.push(
+        await deliver(payload, slackWebhook, { platform: "slack" })
+      );
+    }
 
-      await post(payload, slackWebhook);
+    if (discordWebhook.length > 0) {
+      const messages = buildDiscord(filtered, unfiltered, {
+        feedName,
+        feedImg,
+        unfurl,
+        showDesc,
+        showImg,
+        showDate,
+      });
+      await deliverAll(messages, deliver, discordWebhook, deliveries);
+    }
 
-      if (cacheDir) {
-        await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
-      }
-    } else {
-      core.info("No new items found");
+    const failures = deliveries.filter((result) => !result.ok);
+    if (failures.length > 0) {
+      const detail = failures
+        .map(
+          (failure) =>
+            `${failure.platform} ${failure.status}: ${failure.body.slice(0, 200)}`
+        )
+        .join("; ");
+      core.setFailed(`Delivery failed — ${detail}`);
+      return;
+    }
+
+    if (cacheDir) {
+      await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
     }
   } catch (err) {
     core.debug("Operation failed due to error");

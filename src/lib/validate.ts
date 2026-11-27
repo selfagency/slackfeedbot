@@ -4,12 +4,19 @@ import * as core from "@actions/core";
 const validate = (): void => {
   core.debug("Validating inputs…");
 
+  const rss = core.getInput("rss");
+  const slackWebhook = core.getInput("slack_webhook");
+  const discordWebhook = core.getInput("discord_webhook");
+  const interval = core.getInput("interval");
+  const cacheDir = core.getInput("cache_dir");
+
+  // Webhook values are credentials; log presence, never the value.
   core.debug(
     `Inputs: ${JSON.stringify({
-      slackWebhook: core.getInput("slack_webhook"),
-      rssFeed: core.getInput("rss"),
-      cacheDir: core.getInput("cache_dir"),
-      interval: core.getInput("interval"),
+      rssFeed: rss,
+      slackWebhook: slackWebhook.length > 0 ? "[set]" : "[unset]",
+      discordWebhook: discordWebhook.length > 0 ? "[set]" : "[unset]",
+      interval,
       unfurl: core.getInput("unfurl"),
       showDesc: core.getInput("show_desc"),
       showLink: core.getInput("show_link"),
@@ -18,30 +25,39 @@ const validate = (): void => {
     })}`
   );
 
-  if (
-    core.getInput("rss").length === 0 ||
-    !core.getInput("rss").startsWith("http")
-  ) {
+  if (rss.length === 0 || !rss.startsWith("http")) {
     throw new Error("No feed or invalid feed specified");
   }
 
-  if (
-    core.getInput("slack_webhook").length === 0 ||
-    !core.getInput("slack_webhook").startsWith("https")
-  ) {
+  const hasSlack = slackWebhook.length > 0;
+  const hasDiscord = discordWebhook.length > 0;
+  if (!(hasSlack || hasDiscord)) {
+    throw new Error("No Slack or Discord webhook specified");
+  }
+
+  if (hasSlack && !slackWebhook.startsWith("https")) {
     throw new Error("No Slack webhook or invalid webhook specified");
   }
 
   if (
-    core.getInput("interval").length === 0 &&
-    core.getInput("cache_dir").length === 0
+    hasDiscord &&
+    !(
+      discordWebhook.startsWith("https://") &&
+      discordWebhook.includes("/api/webhooks/")
+    )
   ) {
+    throw new Error(
+      "Discord webhook must be an https://discord.com/api/webhooks/ URL"
+    );
+  }
+
+  if (interval.length === 0 && cacheDir.length === 0) {
     throw new Error("No interval or cache folder specified");
   }
 
   if (
-    core.getInput("interval").length > 0 &&
-    Number.parseInt(core.getInput("interval"), 10).toString() === "NaN"
+    interval.length > 0 &&
+    Number.parseInt(interval, 10).toString() === "NaN"
   ) {
     throw new Error("Invalid interval specified");
   }

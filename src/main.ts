@@ -1,9 +1,10 @@
 import * as core from "@actions/core";
 import { run } from "./action.ts";
 import { writeCache } from "./lib/cache.ts";
+import { deliver } from "./lib/deliver.ts";
+import { buildDiscordMessages } from "./lib/discord.ts";
 import { getFeed } from "./lib/getfeed.ts";
 import { genPayload } from "./lib/payload.ts";
-import { slack } from "./lib/slack.ts";
 import { validate } from "./lib/validate.ts";
 
 // Bundle entry point; only referenced by dist/index.cjs.
@@ -14,7 +15,8 @@ const main = async (): Promise<void> => {
     getBooleanInput: core.getBooleanInput,
     getFeed,
     genPayload,
-    slack,
+    discord: buildDiscordMessages,
+    deliver,
     writeCache,
   });
 };

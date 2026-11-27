@@ -1,8 +1,6 @@
 import * as core from "@actions/core";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { compile } from "html-to-text";
-import { parseHTML } from "linkedom";
 import type {
   Block,
   BlockText,
@@ -11,72 +9,16 @@ import type {
   RssFeedItem,
 } from "../types.ts";
 import { getFeedImg } from "./feedimg.ts";
+import {
+  escapeSlack,
+  htmlToMrkdwn,
+  plainTitle,
+  sanitizeUrl,
+} from "./markdown.ts";
 
 dayjs.extend(utc);
 
-const html2txt = compile({
-  wordwrap: 255,
-});
-
-// Slack treats &, <, and > as control characters; these entities are decoded
-// for display, which also neutralizes <!channel>/<@user>-style injection.
-const escapeSlack = (text: string): string =>
-  text.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
-
-// Feed-provided URLs could carry "<", ">", or a mention-style prefix; strip
-// them so our own <url|label> sequence stays a plain link.
-const sanitizeUrl = (url: string): string =>
-  url.replace(/[<>\s]/gu, "").replace(/^[@!]/u, "");
-
-const isElement = (node: Node): node is Element => node.nodeType === 1; // ELEMENT_NODE
-
-const convertChildren = (node: Node | null | undefined): string =>
-  Array.from(node?.childNodes ?? [])
-    .map(convertNode)
-    .join("");
-
-// Converts HTML to Slack mrkdwn: links, emphasis, bullets, and line breaks
-const convertNode = (node: Node): string => {
-  if (node.nodeType === 3) {
-    return escapeSlack(node.textContent ?? ""); // TEXT_NODE
-  }
-  if (!isElement(node)) {
-    return "";
-  }
-
-  const inner = convertChildren(node);
-  switch (node.tagName.toLowerCase()) {
-    case "a": {
-      const href = node.getAttribute("href");
-      return href ? `<${href}|${inner}>` : inner;
-    }
-    case "strong":
-    case "b":
-      return `*${inner}*`;
-    case "em":
-    case "i":
-      return `_${inner}_`;
-    case "li":
-      return `• ${inner}\n`;
-    case "p":
-    case "div":
-      return `${inner}\n`;
-    case "br":
-      return "\n";
-    default:
-      return inner;
-  }
-};
-
-const htmlToMrkdwn = (html: string): string =>
-  convertChildren(parseHTML(`<div>${html}</div>`).document.querySelector("div"))
-    .replace(/[ \t]+/gu, " ")
-    .replace(/\*{2,}/gu, "*")
-    .replace(/_{2,}/gu, "_")
-    .replace(/\n{3,}/gu, "\n\n")
-    .trim();
-
-// Generates the payload to publish to Slack
+// Generates the Slack payload to publish
 const genPayload = async (
   filtered: RssFeedItem[],
   unfiltered: RssFeed,
@@ -90,17 +32,17 @@ const genPayload = async (
   showLink: boolean
 ): Promise<Payload> => {
   const blocks: Block[] = [];
-  filtered.forEach((item) => {
+  for (const item of filtered) {
     let text = "";
 
     if (!unfurl && item.description) {
-      text += htmlToMrkdwn(item.description);
+      text = htmlToMrkdwn(item.description, "slack");
     }
 
     if (item.title) {
       blocks.push({
         type: "header",
-        text: { type: "plain_text", text: escapeSlack(html2txt(item.title)) },
+        text: { type: "plain_text", text: escapeSlack(plainTitle(item.title)) },
       });
     }
 
@@ -157,14 +99,14 @@ const genPayload = async (
         });
       }
     }
-  });
+  }
 
   const payload: Payload = {
     as_user: false,
     username: feedName.length
       ? feedName
       : unfiltered.title
-        ? html2txt(unfiltered.title)
+        ? plainTitle(unfiltered.title)
         : "FeedBot",
     icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
     unfurl_links: unfurl,

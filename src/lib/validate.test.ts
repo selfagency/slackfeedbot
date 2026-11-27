@@ -4,6 +4,7 @@ import { validate } from "./validate.ts";
 const ENV_KEYS = [
   "INPUT_RSS",
   "INPUT_SLACK_WEBHOOK",
+  "INPUT_DISCORD_WEBHOOK",
   "INPUT_CACHE_DIR",
   "INPUT_INTERVAL",
   "INPUT_UNFURL",
@@ -77,6 +78,40 @@ describe("validate", () => {
     }).toThrowError("No feed or invalid feed specified");
   });
 
+  it("rejects runs without any webhook", () => {
+    setInputs({
+      rss: "https://example.com/feed.xml",
+      interval: "15",
+    });
+    expect(() => {
+      validate();
+    }).toThrowError("No Slack or Discord webhook specified");
+  });
+
+  it("accepts a Discord webhook alone", () => {
+    setInputs({
+      rss: "https://example.com/feed.xml",
+      discord_webhook: "https://discord.com/api/webhooks/123/token",
+      interval: "15",
+    });
+    expect(() => {
+      validate();
+    }).not.toThrow();
+  });
+
+  it("rejects a Discord webhook outside the api/webhooks path", () => {
+    setInputs({
+      rss: "https://example.com/feed.xml",
+      discord_webhook: "https://example.com/api/not-a-webhook",
+      interval: "15",
+    });
+    expect(() => {
+      validate();
+    }).toThrowError(
+      "Discord webhook must be an https://discord.com/api/webhooks/ URL"
+    );
+  });
+
   it("rejects a missing or non-https webhook", () => {
     setInputs({
       rss: "https://example.com/feed.xml",
@@ -84,7 +119,7 @@ describe("validate", () => {
     });
     expect(() => {
       validate();
-    }).toThrowError("No Slack webhook or invalid webhook specified");
+    }).toThrowError("No Slack or Discord webhook specified");
 
     setInputs({
       rss: "https://example.com/feed.xml",
