@@ -20,7 +20,6 @@ jobs:
           key: feed-cache-i-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-i-
       - name: Merged feeds → Discord
-      - name: Merged feeds → Discord
         uses: "selfagency/slackfeedbot@dev"
         with:
           rss: "https://www.rssrssrssrss.com/api/merge?feeds=NoIgFgLhAODOBcB6RB3NA6A5gSwmArgEawQCGE+s6AxgPYC2iY2JtATgJ7rkMgA04KHCSIS5SujLYANrGqlpAUxoNEAM0WKAJujaxY-QTATIxFKoXwA7K1yuKITFhHZce9Q5GMizElKVhSQmwVRmZWTm4XDwEvYWQ0FHR7CGp8aABaXyotRXVNLURPIRNRMnNdUmoAa3s2HTpGPQNYkpFEmmlafC01aVI2RWzQpwi3aOLvU3KJNWwAN0UrbHsqbFp87V19Sfiy8SoARmgA2BR2BtVwl0j3XdLB2CWtLJmqRs2dZpAAXSA"
