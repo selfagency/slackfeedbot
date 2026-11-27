@@ -1,40 +1,40 @@
-name: 'SlackFeedBot'
-author: 'selfagency'
-description: 'Push RSS feed updates to Slack via GitHub Actions'
+name: "SlackFeedBot"
+author: "selfagency"
+description: "Push RSS feed updates to Slack via GitHub Actions"
 branding:
-  icon: 'rss'
-  color: 'orange'
+  icon: "rss"
+  color: "orange"
 inputs:
   rss:
-    description: 'RSS feed URL'
+    description: "RSS feed URL"
     required: true
   feed_name:
-    description: 'Feed name'
+    description: "Feed name"
     required: false
   feed_image:
-    description: 'Feed image URL'
+    description: "Feed image URL"
     required: false
   slack_webhook:
-    description: 'Slack webhook URL'
+    description: "Slack webhook URL"
     required: true
   cache_dir:
-    description: 'Cache folder'
+    description: "Cache folder"
     required: true
   interval:
-    description: 'Minutes between workflow runs'
+    description: "Minutes between workflow runs"
     required: false
   show_date:
-    description: 'Show date in output'
+    description: "Show date in output"
     required: false
   show_link:
-    description: 'Show link in output'
+    description: "Show link in output"
     required: false
   show_description:
-    description: 'Show description in output'
+    description: "Show description in output"
     required: false
   unfurl:
-    description: 'Unfurl links'
+    description: "Unfurl links"
     required: false
 runs:
-  using: 'node16'
-  main: 'dist/index.cjs'
+  using: "node24"
+  main: "dist/index.cjs"

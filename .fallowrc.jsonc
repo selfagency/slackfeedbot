@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["src/action.ts"],
+  "ignorePatterns": ["dist/**", ".tmp/**", "plan/**", "coverage/**"],
+  "ignoreDependencies": ["vite"],
+  // TRANSITIONAL (P1 -> P4): legacy functions (validate/run/checkCache/
+  // getFeedImg/getFeed/genPayload) breach complexity tiers and are fully
+  // restructured by the P2/P4 phases in plan/node24-discord-modernization.md.
+  // Delete this rules block (keep severity as error) once those land.
+  "rules": {
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn",
+    "complexity-file-lines": "warn"
+  }
+}

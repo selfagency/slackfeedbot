@@ -1,73 +1,79 @@
 name: FeedBot
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 jobs:
   rss-to-slack:
     runs-on: ubuntu-latest
     steps:
       - name: Generate cache key
-        uses: actions/github-script@v6
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: generate-key
         with:
           script: |
             core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
-        uses: actions/cache@v2
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ./slackfeedbot-cache
           key: feed-cache-i-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-i-
       - name: LAT
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://www.latimes.com/rss2.0.xml'
+          rss: "https://www.latimes.com/rss2.0.xml"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: WaPo
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://feeds.washingtonpost.com/rss/homepage'
-          feed_name: 'Washington Post'
-          feed_image: 'https://www.washingtonpost.com/wp-stat/assets/favicons/touch-icon-iphone.png'
+          rss: "https://feeds.washingtonpost.com/rss/homepage"
+          feed_name: "Washington Post"
+          feed_image: "https://www.washingtonpost.com/wp-stat/assets/favicons/touch-icon-iphone.png"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: GitHub
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://www.githubstatus.com/history.rss'
+          rss: "https://www.githubstatus.com/history.rss"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: Google Cloud
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://status.cloud.google.com/en/feed.atom'
+          rss: "https://status.cloud.google.com/en/feed.atom"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: Zoom
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://status.zoom.us/history.rss'
+          rss: "https://status.zoom.us/history.rss"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: Linear
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://linearstatus.com/history.rss'
+          rss: "https://linearstatus.com/history.rss"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
       - name: Stripe
-        uses: 'selfagency/slackfeedbot@dev'
+        uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: 'https://status.stripe.com/current/atom.xml'
+          rss: "https://status.stripe.com/current/atom.xml"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: './slackfeedbot-cache'
+          cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
-
+      - name: Merged feeds → Discord
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://www.rssrssrssrss.com/api/merge?feeds=NoIgFgLhAODOBcB6RB3NA6A5gSwmArgEawQCGE+s6AxgPYC2iY2JtATgJ7rkMgA04KHCSIS5SujLYANrGqlpAUxoNEAM0WKAJujaxY-QTATIxFKoXwA7K1yuKITFhHZce9Q5GMizElKVhSQmwVRmZWTm4XDwEvYWQ0FHR7CGp8aABaXyotRXVNLURPIRNRMnNdUmoAa3s2HTpGPQNYkpFEmmlafC01aVI2RWzQpwi3aOLvU3KJNWwAN0UrbHsqbFp87V19Sfiy8SoARmgA2BR2BtVwl0j3XdLB2CWtLJmqRs2dZpAAXSA"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true

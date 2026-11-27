@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core", "ultracite/biome/vitest"],
+  "files": {
+    "includes": ["!**/dist", "!**/.tmp", "!**/plan", "!**/coverage"]
+  },
+  // TRANSITIONAL: legacy-source downgrades pending the P2/P4 rewrites in
+  // plan/node24-discord-modernization.md. New code (src/**/*.test.ts and
+  // everything outside this override) is held to full ultracite standard.
+  // DELETE this override once src/lib rewrites and P4 remediation land.
+  "overrides": [
+    {
+      "includes": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.test-d.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnnecessaryConditions": "warn",
+            "noEvolvingTypes": "warn",
+            "noImplicitAnyLet": "warn",
+            "noForIn": "warn",
+            "useGuardForIn": "warn",
+            "useAwait": "warn"
+          },
+          "style": {
+            "noNestedTernary": "warn",
+            "useErrorCause": "warn",
+            "useNamedCaptureGroup": "warn"
+          },
+          "complexity": {
+            "noForEach": "warn",
+            "noExcessiveCognitiveComplexity": "warn"
+          },
+          "performance": {
+            "useTopLevelRegex": "warn"
+          }
+        }
+      }
+    }
+  ]
+}

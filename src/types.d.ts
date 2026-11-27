@@ -1,28 +1,28 @@
 interface RssFeedItem extends Record {
-  [index?: string]: string | undefined;
-  title?: string;
-  description?: string;
-  link?: string;
-  published?: number;
-  created?: number;
   category?: string[];
+  created?: number;
+  description?: string;
   enclosures?: unknown[];
+  link?: string;
   media?: unknown;
+  published?: number;
+  title?: string;
+  [index: string]: string | undefined;
 }
 
 interface RssFeed {
-  title?: string;
-  description?: string;
-  link?: string;
-  image?: string;
   category?: string[];
+  description?: string;
+  image?: string;
   items?: RssFeedItem[];
+  link?: string;
+  title?: string;
 }
 
 interface Icon {
+  sizes?: string;
   src?: string;
   type?: string;
-  sizes?: string;
 }
 
 interface Icons {
@@ -32,22 +32,23 @@ interface Icons {
 
 /* eslint-disable camelcase */
 interface Block {
-  type?: string;
-  text?: string | Block;
-  fields?: Block[];
-  image_url?: string;
   accessory?: Block;
   elements?: Block[];
+  fields?: Block[];
+  image_url?: string;
+  text?: string | Block;
+  type?: string;
 }
 
 interface Payload {
   as_user?: boolean;
-  username?: string;
+  blocks?: Block[];
   icon_url?: string;
   unfurl_links?: boolean;
   unfurl_media?: boolean;
-  blocks?: Block[];
+  username?: string;
 }
+
 /* eslint-enable camelcase */
 
-export { RssFeed, RssFeedItem, Icons, Icon, Payload, Block };
+export { Block, Icon, Icons, Payload, RssFeed, RssFeedItem };

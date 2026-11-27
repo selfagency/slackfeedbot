@@ -1,8 +1,8 @@
-import core from '@actions/core';
-import { createHash } from 'crypto';
-import fs from 'fs';
-import { promisify } from 'util';
-import type { RssFeed, RssFeedItem } from '../types.d';
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import { promisify } from "node:util";
+import core from "@actions/core";
+import type { RssFeed, RssFeedItem } from "../types.d";
 
 const read = promisify(fs.readFile);
 const write = promisify(fs.writeFile);
@@ -23,17 +23,16 @@ class CacheRecord {
 }
 
 // For hashing the CacheRecord
-const hash = (str: string): string => {
-  return createHash('sha256').update(str).digest('hex');
-};
+const hash = (str: string): string =>
+  createHash("sha256").update(str).digest("hex");
 
 // Generates a hashable string from the CacheRecord
 const cacheSlug = (item: CacheRecord): string => {
   const { feedTitle, title, created } = item;
 
-  let slug = '';
-  slug += feedTitle?.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  slug += title?.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  let slug = "";
+  slug += feedTitle?.toLowerCase().replace(/[^a-z0-9]/gu, "-");
+  slug += title?.toLowerCase().replace(/[^a-z0-9]/gu, "-");
 
   if (created) {
     const date = new Date(created);
@@ -43,24 +42,30 @@ const cacheSlug = (item: CacheRecord): string => {
 };
 
 // Reads the cache file and returns it as an array of hashes
-const readCache = async (rssFeed: string, cacheDir: string): Promise<string[]> => {
+const readCache = async (
+  rssFeed: string,
+  cacheDir: string
+): Promise<string[]> => {
   try {
-    core.debug(`Retrieving previously published entries…`);
+    core.debug("Retrieving previously published entries…");
 
     const rssFeedUrl = new URL(rssFeed);
-    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
-    const cached = JSON.parse(await read(cachePath, 'utf8'));
+    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./gu, "_")}.json`;
+    const cached = JSON.parse(await read(cachePath, "utf8"));
 
     core.debug(`Found ${cached.length} cached items`);
     return cached;
   } catch (err) {
-    core.debug((<Error>err).message);
-    throw new Error('Failed to read cache');
+    core.debug(err instanceof Error ? err.message : String(err));
+    throw new Error("Failed to read cache");
   }
 };
 
 // Checks if an item has already been published by comparing hashed CacheRecords
-const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]> => {
+const checkCache = async (
+  rss: RssFeed,
+  cached: string[]
+): Promise<RssFeedItem[]> => {
   try {
     if (rss?.items) {
       const output = [];
@@ -78,18 +83,19 @@ const checkCache = async (rss: RssFeed, cached: string[]): Promise<RssFeedItem[]
           }
         }
 
-        if (!cacheHit) output.push(item);
+        if (!cacheHit) {
+          output.push(item);
+        }
       }
 
       core.debug(`Found ${output.length} uncached items`);
       return output;
-    } else {
-      core.debug('Nothing to check');
-      return [];
     }
+    core.debug("Nothing to check");
+    return [];
   } catch (err) {
-    core.debug((<Error>err).message);
-    throw new Error('Error checking cache');
+    core.debug(err instanceof Error ? err.message : String(err));
+    throw new Error("Error checking cache");
   }
 };
 
@@ -103,7 +109,7 @@ const writeCache = async (
 ): Promise<void> => {
   try {
     const rssFeedUrl = new URL(rssFeed);
-    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./g, '_')}.json`;
+    const cachePath = `${cacheDir}/${rssFeedUrl.hostname.replace(/\./gu, "_")}.json`;
 
     core.debug(`Writing cache to ${cachePath}`);
 
@@ -117,9 +123,9 @@ const writeCache = async (
 
     await write(cachePath, JSON.stringify(hashed));
   } catch (err) {
-    core.debug((<Error>err).message);
-    throw new Error('Failed to write to cache');
+    core.debug(err instanceof Error ? err.message : String(err));
+    throw new Error("Failed to write to cache");
   }
 };
 
-export { readCache, checkCache, writeCache, CacheRecord };
+export { checkCache, readCache, writeCache };

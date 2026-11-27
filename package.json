@@ -9,19 +9,20 @@
   "license": "MIT",
   "author": "Daniel Sieradski <daniel@self.agency>",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "scripts": {
-    "build": "tsc --project .",
-    "prepare": "husky install",
+    "build": "esbuild src/action.ts --bundle --platform=node --target=node24 --outfile=dist/index.cjs",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "lint": "tsc --noEmit && ultracite check",
+    "lint-staged": "lint-staged --allow-empty",
+    "prepare": "husky",
     "start": "node dist/index.cjs",
-    "bundle": "rm -rf dist; esbuild src/action.ts --bundle --platform=node --target=node16 --outfile=dist/index.cjs",
-    "lint": "tsc --noEmit && eslint src/. && prettier --check src/.",
-    "lint-staged": "lint-staged --allow-empty"
+    "test": "vitest run --passWithNoTests"
   },
   "lint-staged": {
-    "*.{js,json,md,yml}": [
-      "eslint --fix",
-      "prettier --write"
+    "*.{js,mjs,cjs,ts,mts,cts,json,jsonc}": [
+      "npx ultracite fix"
     ]
   },
   "dependencies": {
@@ -30,31 +31,25 @@
     "html-to-text": "^8.1.0",
     "linkedom": "^0.14.4",
     "node-fetch": "^3.2.10",
-    "object-sha": "^2.0.6",
     "rss-to-json": "^2.1.1",
     "showdown": "^2.0.3",
     "striptags": "^3.2.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
     "@types/html-to-text": "^8.1.0",
-    "@types/node": "^17.0.21",
+    "@types/node": "^24.19.4",
     "@types/showdown": "^1.9.4",
-    "@typescript-eslint/eslint-plugin": "^5.15.0",
-    "@typescript-eslint/parser": "^5.15.0",
-    "esbuild": "^0.25.0",
-    "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-markdown": "^2.2.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
-    "eslint-plugin-yml": "^0.14.0",
-    "eslint-scope": "^7.1.1",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.3.6",
-    "prettier": "^2.6.0",
-    "typescript": "^4.6.2"
+    "esbuild": "^0.28.2",
+    "fallow": "^3.50.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.2",
+    "typescript": "~6.0.3",
+    "ultracite": "^8.3.1",
+    "vite": "^8.4.0",
+    "vitest": "^5.1.2"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

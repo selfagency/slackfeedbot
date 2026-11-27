@@ -1,16 +1,16 @@
-import core from '@actions/core';
-import fetch from 'node-fetch';
-import { Payload } from '../types';
+import core from "@actions/core";
+import fetch from "node-fetch";
+import type { Payload } from "../types.d";
 
 // Publishes messages to Slack
 const slack = async (payload: Payload, webhook: string) => {
   const res = await fetch(webhook, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(payload),
     headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      Accept: 'application/json'
-    }
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "application/json",
+    },
   });
   core.debug(`Slack response: ${await res.text()}`);
 };
