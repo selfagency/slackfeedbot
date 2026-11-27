@@ -1,13 +1,13 @@
-interface RssFeedItem extends Record {
+interface RssFeedItem {
   category?: string[];
   created?: number;
   description?: string;
   enclosures?: unknown[];
+  image?: string;
   link?: string;
   media?: unknown;
   published?: number;
   title?: string;
-  [index: string]: string | undefined;
 }
 
 interface RssFeed {
@@ -30,7 +30,6 @@ interface Icons {
   icons?: Icon[];
 }
 
-/* eslint-disable camelcase */
 interface Block {
   accessory?: Block;
   elements?: Block[];
@@ -49,6 +48,4 @@ interface Payload {
   username?: string;
 }
 
-/* eslint-enable camelcase */
-
-export { Block, Icon, Icons, Payload, RssFeed, RssFeedItem };
+export type { Block, Icons, Payload, RssFeed, RssFeedItem };

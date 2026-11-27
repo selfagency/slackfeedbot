@@ -1,22 +1,19 @@
-import core from "@actions/core";
-import fetch from "node-fetch";
-import type { Icons } from "../types.d";
+import * as core from "@actions/core";
+import type { Icons } from "../types.ts";
+
+const STRIP_PREFIX_RE = /^(status|feeds?|rss)\./u;
 
 // Gets the website's favicon
 const getFeedImg = async (rssFeed: string): Promise<string | undefined> => {
   const url = new URL(rssFeed);
-  const host = url.hostname
-    .replace(/^status\./u, "")
-    .replace(/^feed\./u, "")
-    .replace(/^feeds\./u, "")
-    .replace(/^rss\./u, "");
+  const host = url.hostname.replace(STRIP_PREFIX_RE, "");
   core.debug(`Getting favicons for ${host}`);
 
-  let favicon;
+  let favicon: string | undefined;
   try {
     const icons = (await (
-      await fetch(`https:/favicongrabber.com/api/grab/${host}`)
-    ).json()) as Icons;
+      await fetch(`https://favicongrabber.com/api/grab/${host}`)
+    ).json()) as Icons | undefined;
     core.debug(`Icons: ${JSON.stringify(icons)}`);
 
     if (icons?.icons) {

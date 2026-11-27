@@ -1,4 +1,4 @@
-import core from "@actions/core";
+import * as core from "@actions/core";
 import { writeCache } from "./lib/cache.ts";
 import { getFeed } from "./lib/getfeed.ts";
 import { genPayload } from "./lib/payload.ts";

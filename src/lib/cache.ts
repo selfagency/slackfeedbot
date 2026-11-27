@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { promisify } from "node:util";
-import core from "@actions/core";
-import type { RssFeed, RssFeedItem } from "../types.d";
+import * as core from "@actions/core";
+import type { RssFeed, RssFeedItem } from "../types.ts";
 
 const read = promisify(fs.readFile);
 const write = promisify(fs.writeFile);

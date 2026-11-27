@@ -1,8 +1,62 @@
-import core from "@actions/core";
+import * as core from "@actions/core";
 import dayjs from "dayjs";
-import { parse } from "rss-to-json";
-import type { RssFeed, RssFeedItem } from "../types.d";
+import Parser from "rss-parser";
+import type { RssFeed, RssFeedItem } from "../types.ts";
 import { checkCache, readCache } from "./cache.ts";
+
+const parser = new Parser({
+  customFields: {
+    item: ["content:encoded"],
+  },
+});
+
+const toTimestamp = (item: Parser.Item): number => {
+  const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
+  return Number.isNaN(parsed) ? Date.now() : parsed;
+};
+
+// Prefers the full HTML body, then any description variants
+const toHtml = (item: Parser.Item): string | undefined => {
+  const record = item as unknown as Record<string, string | undefined>;
+  return (
+    record["content:encoded"] ??
+    item.content ??
+    record.description ??
+    record.contentSnippet
+  );
+};
+
+// Extracts a usable post image: iTunes art first, then image enclosures
+const toImage = (item: Parser.Item): string | undefined => {
+  const { itunes } = item as unknown as { itunes?: { image?: string } };
+  if (itunes?.image) {
+    return itunes.image;
+  }
+  const { enclosure } = item;
+  if (enclosure?.url && (enclosure.type ?? "").startsWith("image/")) {
+    return enclosure.url;
+  }
+  return undefined;
+};
+
+const toItem = (item: Parser.Item): RssFeedItem => ({
+  title: item.title,
+  description: toHtml(item),
+  link: item.link,
+  image: toImage(item),
+  published: toTimestamp(item),
+  created: toTimestamp(item),
+  category: item.categories ?? [],
+});
+
+const toFeed = (feed: Parser.Output<Parser.Item>): RssFeed => ({
+  title: feed.title,
+  description: feed.description,
+  link: feed.link,
+  image: feed.image?.url,
+  category: (feed as unknown as { category?: string[] }).category ?? [],
+  items: feed.items.map(toItem),
+});
 
 // Gets the feed, checks the cache (or time since last run), and returns new items
 const getFeed = async (
@@ -16,10 +70,10 @@ const getFeed = async (
 }> => {
   core.debug(`Retrieving ${rssFeed}…`);
 
-  const rss: RssFeed = await parse(rssFeed, {});
-  core.debug(`Feed has ${rss?.items?.length} items`);
+  const rss = toFeed(await parser.parseURL(rssFeed));
+  core.debug(`Feed has ${rss.items?.length} items`);
 
-  if (rss?.items?.length) {
+  if (rss.items?.length) {
     let toSend: RssFeedItem[] = [];
     let cached: string[] = [];
 
@@ -48,7 +102,9 @@ const getFeed = async (
 
     return { filtered: toSend, unfiltered: rss, cached };
   }
-  throw new Error("No feed items found");
+
+  core.info("No feed items found");
+  return { filtered: [], unfiltered: rss, cached: [] };
 };
 
 export { getFeed };

@@ -1,6 +1,5 @@
-import core from "@actions/core";
-import fetch from "node-fetch";
-import type { Payload } from "../types.d";
+import * as core from "@actions/core";
+import type { Payload } from "../types.ts";
 
 // Publishes messages to Slack
 const slack = async (payload: Payload, webhook: string) => {

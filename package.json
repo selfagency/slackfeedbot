@@ -21,25 +21,21 @@
     "test": "vitest run --passWithNoTests"
   },
   "lint-staged": {
-    "*.{js,mjs,cjs,ts,mts,cts,json,jsonc}": [
+    "src/**/*.{js,mjs,cjs,ts,mts,cts,json,jsonc}": [
       "npx ultracite fix"
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.9.1",
-    "dayjs": "^1.11.0",
-    "html-to-text": "^8.1.0",
-    "linkedom": "^0.14.4",
-    "node-fetch": "^3.2.10",
-    "rss-to-json": "^2.1.1",
-    "showdown": "^2.0.3",
-    "striptags": "^3.2.0"
+    "@actions/core": "^3.0.1",
+    "dayjs": "^1.11.23",
+    "html-to-text": "^10.0.1",
+    "linkedom": "^0.18.15",
+    "rss-parser": "^3.13.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",
-    "@types/html-to-text": "^8.1.0",
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "^24.19.4",
-    "@types/showdown": "^1.9.4",
     "esbuild": "^0.28.2",
     "fallow": "^3.50.0",
     "husky": "^9.1.7",
