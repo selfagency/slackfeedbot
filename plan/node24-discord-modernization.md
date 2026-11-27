@@ -1,6 +1,6 @@
 # Plan: Node 24 Modernization + Discord Support — SlackFeedBot
 
-Status: **P0–P5 EXECUTED** (commits 24bdfe5, 7aa4c92, 157551b, 917c8d9, 0a03fbb) — P6 (docs/release) in progress. Original draft below.
+Status: **COMPLETE & RELEASED as v2.0.0** (v2.0.0 tag live; commits up to 1d78e50; live dogfood: fetch→Discord→cache verified 2026-11-27; CI green). Dogfooding is Discord-only (owner has no Slack team). Original draft below.
 
 ## Executive Summary
 

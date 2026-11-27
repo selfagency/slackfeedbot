@@ -1,7 +1,9 @@
 name: FeedBot
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    # Hourly at :23 (avoids the top-of-hour congestion band; 24 runs/day).
+    # Public repo: Linux minutes are free; this stays trivial even if private.
+    - cron: "23 * * * *"
   workflow_dispatch:
 jobs:
   feed-to-discord:
@@ -19,10 +21,73 @@ jobs:
           path: ./slackfeedbot-cache
           key: feed-cache-i-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-i-
-      - name: Merged feeds → Discord
+      - name: GitHub
         uses: "selfagency/slackfeedbot@dev"
         with:
-          rss: "https://www.rssrssrssrss.com/api/merge?feeds=NoIgFgLhAODOBcB6RB3NA6A5gSwmArgEawQCGE+s6AxgPYC2iY2JtATgJ7rkMgA04KHCSIS5SujLYANrGqlpAUxoNEAM0WKAJujaxY-QTATIxFKoXwA7K1yuKITFhHZce9Q5GMizElKVhSQmwVRmZWTm4XDwEvYWQ0FHR7CGp8aABaXyotRXVNLURPIRNRMnNdUmoAa3s2HTpGPQNYkpFEmmlafC01aVI2RWzQpwi3aOLvU3KJNWwAN0UrbHsqbFp87V19Sfiy8SoARmgA2BR2BtVwl0j3XdLB2CWtLJmqRs2dZpAAXSA"
+          rss: "https://www.githubstatus.com/history.atom"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Tailscale
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.tailscale.com/feed.rss"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Bunny
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.bunny.net/history.atom"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Wasabi
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.wasabi.com/history.atom"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: netcup
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://www.netcup-status.de/feed/"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: RackNerd
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.racknerd.com/rss"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Cloudflare
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://www.cloudflarestatus.com/history.atom"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Fivenines
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.fivenines.io/feed.rss"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: 1Password
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://status.1password.com/history.atom"
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          cache_dir: "./slackfeedbot-cache"
+        continue-on-error: true
+      - name: Resend
+        uses: "selfagency/slackfeedbot@dev"
+        with:
+          rss: "https://resend-status.com/feed.rss"
           discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
           cache_dir: "./slackfeedbot-cache"
         continue-on-error: true
