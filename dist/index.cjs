@@ -26734,6 +26734,75 @@ function info(message) {
   process.stdout.write(message + os3.EOL);
 }
 
+// src/action.ts
+var run = async (deps) => {
+  const {
+    validate: check,
+    getInput: getInput2,
+    getBooleanInput: getBooleanInput2,
+    getFeed: read2,
+    genPayload: build,
+    slack: post,
+    writeCache: save
+  } = deps;
+  try {
+    check();
+    const slackWebhook = getInput2("slack_webhook");
+    const rssFeed = getInput2("rss");
+    const feedName = getInput2("feed_name");
+    const feedImg = getInput2("feed_image");
+    const cacheDir = getInput2("cache_dir");
+    const interval = getInput2("interval").length > 0 ? Number.parseInt(getInput2("interval"), 10) : void 0;
+    const unfurl = getInput2("unfurl").length > 0 ? getBooleanInput2("unfurl") : false;
+    const showDesc = getInput2("show_desc").length > 0 ? getBooleanInput2("show_desc") : true;
+    const showLink = getInput2("show_link").length > 0 ? getBooleanInput2("show_link") : true;
+    const showDate = getInput2("show_date").length > 0 ? getBooleanInput2("show_date") : true;
+    const showImg = getInput2("show_img").length > 0 ? getBooleanInput2("show_img") : true;
+    debug(
+      `Processed inputs: ${JSON.stringify({
+        slackWebhook,
+        rssFeed,
+        feedName,
+        feedImg,
+        cacheDir,
+        interval,
+        unfurl,
+        showDesc,
+        showLink,
+        showDate
+      })}`
+    );
+    const { filtered, unfiltered, cached } = await read2(
+      rssFeed,
+      cacheDir,
+      interval
+    );
+    if (filtered.length) {
+      const payload = await build(
+        filtered,
+        unfiltered,
+        rssFeed,
+        feedName,
+        feedImg,
+        unfurl,
+        showDesc,
+        showImg,
+        showDate,
+        showLink
+      );
+      await post(payload, slackWebhook);
+      if (cacheDir) {
+        await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
+      }
+    } else {
+      info("No new items found");
+    }
+  } catch (err) {
+    debug("Operation failed due to error");
+    setFailed(err instanceof Error ? err.message : String(err));
+  }
+};
+
 // src/lib/cache.ts
 var import_node_crypto = require("node:crypto");
 var import_node_fs = __toESM(require("node:fs"), 1);
@@ -49776,19 +49845,28 @@ function Document4() {
 setPrototypeOf(Document4, Document2).prototype = Document2.prototype;
 
 // src/lib/feedimg.ts
-var STRIP_PREFIX_RE = /^(status|feeds?|rss)\./u;
-var getFeedImg = async (rssFeed) => {
+var STRIP_PREFIX_RE = /^(?:status|feeds?|rss)\./u;
+var PREFERRED_SIZES = ["180x180", "144x144", "72x72"];
+var pickIcon = (icons) => {
+  for (const size of PREFERRED_SIZES) {
+    const hit = icons.find((icon) => icon?.sizes === size && icon?.src);
+    if (hit?.src) {
+      return hit.src;
+    }
+  }
+  return icons[0]?.src;
+};
+var getFeedImg = async (rssFeed, baseUrl = "https://favicongrabber.com") => {
   const url = new URL(rssFeed);
   const host = url.hostname.replace(STRIP_PREFIX_RE, "");
   debug(`Getting favicons for ${host}`);
   let favicon;
   try {
-    const icons = await (await fetch(`https://favicongrabber.com/api/grab/${host}`)).json();
+    const res = await fetch(`${baseUrl}/api/grab/${host}`);
+    const icons = await res.json();
     debug(`Icons: ${JSON.stringify(icons)}`);
     if (icons?.icons) {
-      favicon = icons.icons.find(
-        (i) => i?.sizes === "180x180" || i?.sizes === "144x144" || i?.sizes === "72x72"
-      )?.src || icons.icons[0]?.src;
+      favicon = pickIcon(icons.icons);
       debug(`Favicon: ${favicon}`);
     }
   } catch (err) {
@@ -49949,74 +50027,19 @@ var validate = () => {
   }
 };
 
-// src/action.ts
-var run = async () => {
-  try {
-    validate();
-    const slackWebhook = getInput("slack_webhook");
-    const rssFeed = getInput("rss");
-    const feedName = getInput("feed_name");
-    const feedImg = getInput("feed_image");
-    const cacheDir = getInput("cache_dir");
-    const interval = getInput("interval").length > 0 ? Number.parseInt(getInput("interval"), 10) : void 0;
-    const unfurl = getInput("unfurl").length > 0 ? getBooleanInput("unfurl") : false;
-    const showDesc = getInput("show_desc").length > 0 ? getBooleanInput("show_desc") : true;
-    const showLink = getInput("show_link").length > 0 ? getBooleanInput("show_link") : true;
-    const showDate = getInput("show_date").length > 0 ? getBooleanInput("show_date") : true;
-    const showImg = getInput("show_img").length > 0 ? getBooleanInput("show_img") : true;
-    debug(
-      `Processed inputs: ${JSON.stringify({
-        slackWebhook,
-        rssFeed,
-        feedName,
-        feedImg,
-        cacheDir,
-        interval,
-        unfurl,
-        showDesc,
-        showLink,
-        showDate
-      })}`
-    );
-    const { filtered, unfiltered, cached } = await getFeed(
-      rssFeed,
-      cacheDir,
-      interval
-    );
-    if (filtered.length) {
-      const payload = await genPayload(
-        filtered,
-        unfiltered,
-        rssFeed,
-        feedName,
-        feedImg,
-        unfurl,
-        showDesc,
-        showImg,
-        showDate,
-        showLink
-      );
-      await slack(payload, slackWebhook);
-      if (cacheDir) {
-        await writeCache(
-          unfiltered?.title || "",
-          rssFeed,
-          cacheDir,
-          filtered,
-          cached
-        );
-      }
-    } else {
-      info("No new items found");
-    }
-  } catch (err) {
-    debug("Operation failed due to error");
-    setFailed(err instanceof Error ? err.message : String(err));
-  }
+// src/main.ts
+var main = async () => {
+  await run({
+    validate,
+    getInput,
+    getBooleanInput,
+    getFeed,
+    genPayload,
+    slack,
+    writeCache
+  });
 };
-(async () => {
-  await run();
-})();
+void main();
 /*! Bundled license information:
 
 undici/lib/web/fetch/body.js:

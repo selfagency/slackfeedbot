@@ -1,45 +1,75 @@
 import * as core from "@actions/core";
-import { writeCache } from "./lib/cache.ts";
-import { getFeed } from "./lib/getfeed.ts";
-import { genPayload } from "./lib/payload.ts";
-import { slack } from "./lib/slack.ts";
-import { validate } from "./lib/validate.ts";
+import type { Payload, RssFeed, RssFeedItem } from "./types.ts";
 
-const run = async () => {
+// Collaborators are injected so the orchestration can be integration-tested.
+interface RunDeps {
+  genPayload: (
+    filtered: RssFeedItem[],
+    unfiltered: RssFeed,
+    rssFeed: string,
+    feedName: string,
+    feedImg: string,
+    unfurl: boolean,
+    showDesc: boolean,
+    showImg: boolean,
+    showDate: boolean,
+    showLink: boolean
+  ) => Promise<Payload>;
+  getBooleanInput: (name: string) => boolean;
+  getFeed: (
+    rssFeed: string,
+    cacheDir: string | undefined,
+    interval: number | undefined
+  ) => Promise<{
+    filtered: RssFeedItem[];
+    unfiltered: RssFeed;
+    cached: string[];
+  }>;
+  getInput: (name: string) => string;
+  slack: (payload: Payload, webhook: string) => Promise<void>;
+  validate: () => void;
+  writeCache: (
+    feedTitle: string,
+    rssFeed: string,
+    cacheDir: string,
+    filtered: RssFeedItem[],
+    cached: string[]
+  ) => Promise<void>;
+}
+
+const run = async (deps: RunDeps): Promise<void> => {
+  const {
+    validate: check,
+    getInput,
+    getBooleanInput,
+    getFeed: read,
+    genPayload: build,
+    slack: post,
+    writeCache: save,
+  } = deps;
+
   try {
-    // Validate inputs
-    validate();
+    check();
 
-    // Parse inputs
-    const slackWebhook = core.getInput("slack_webhook");
-    const rssFeed = core.getInput("rss");
-    const feedName = core.getInput("feed_name");
-    const feedImg = core.getInput("feed_image");
-    const cacheDir = core.getInput("cache_dir");
+    const slackWebhook = getInput("slack_webhook");
+    const rssFeed = getInput("rss");
+    const feedName = getInput("feed_name");
+    const feedImg = getInput("feed_image");
+    const cacheDir = getInput("cache_dir");
     const interval =
-      core.getInput("interval").length > 0
-        ? Number.parseInt(core.getInput("interval"), 10)
+      getInput("interval").length > 0
+        ? Number.parseInt(getInput("interval"), 10)
         : undefined;
     const unfurl =
-      core.getInput("unfurl").length > 0
-        ? core.getBooleanInput("unfurl")
-        : false;
+      getInput("unfurl").length > 0 ? getBooleanInput("unfurl") : false;
     const showDesc =
-      core.getInput("show_desc").length > 0
-        ? core.getBooleanInput("show_desc")
-        : true;
+      getInput("show_desc").length > 0 ? getBooleanInput("show_desc") : true;
     const showLink =
-      core.getInput("show_link").length > 0
-        ? core.getBooleanInput("show_link")
-        : true;
+      getInput("show_link").length > 0 ? getBooleanInput("show_link") : true;
     const showDate =
-      core.getInput("show_date").length > 0
-        ? core.getBooleanInput("show_date")
-        : true;
+      getInput("show_date").length > 0 ? getBooleanInput("show_date") : true;
     const showImg =
-      core.getInput("show_img").length > 0
-        ? core.getBooleanInput("show_img")
-        : true;
+      getInput("show_img").length > 0 ? getBooleanInput("show_img") : true;
 
     core.debug(
       `Processed inputs: ${JSON.stringify({
@@ -56,16 +86,14 @@ const run = async () => {
       })}`
     );
 
-    // Get RSS feed items
-    const { filtered, unfiltered, cached } = await getFeed(
+    const { filtered, unfiltered, cached } = await read(
       rssFeed,
       cacheDir,
       interval
     );
 
     if (filtered.length) {
-      // Generate payload
-      const payload = await genPayload(
+      const payload = await build(
         filtered,
         unfiltered,
         rssFeed,
@@ -78,18 +106,10 @@ const run = async () => {
         showLink
       );
 
-      // Send payload to Slack
-      await slack(payload, slackWebhook);
+      await post(payload, slackWebhook);
 
-      // Save cache data
       if (cacheDir) {
-        await writeCache(
-          unfiltered?.title || "",
-          rssFeed,
-          cacheDir,
-          filtered,
-          cached
-        );
+        await save(unfiltered.title || "", rssFeed, cacheDir, filtered, cached);
       }
     } else {
       core.info("No new items found");
@@ -100,6 +120,4 @@ const run = async () => {
   }
 };
 
-(async () => {
-  await run();
-})();
+export { run };

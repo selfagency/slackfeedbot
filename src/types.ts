@@ -30,22 +30,27 @@ interface Icons {
   icons?: Icon[];
 }
 
+interface BlockText {
+  text: string;
+  type: "plain_text" | "mrkdwn";
+}
+
 interface Block {
   accessory?: Block;
-  elements?: Block[];
-  fields?: Block[];
+  elements?: BlockText[];
+  fields?: BlockText[];
   image_url?: string;
-  text?: string | Block;
+  text?: BlockText;
   type?: string;
 }
 
 interface Payload {
   as_user?: boolean;
-  blocks?: Block[];
+  blocks: Block[];
   icon_url?: string;
   unfurl_links?: boolean;
   unfurl_media?: boolean;
   username?: string;
 }
 
-export type { Block, Icons, Payload, RssFeed, RssFeedItem };
+export type { Block, BlockText, Icons, Payload, RssFeed, RssFeedItem };

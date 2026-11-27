@@ -11,7 +11,7 @@
   "type": "module",
   "main": "dist/index.cjs",
   "scripts": {
-    "build": "esbuild src/action.ts --bundle --platform=node --target=node24 --outfile=dist/index.cjs",
+    "build": "esbuild src/main.ts --bundle --platform=node --target=node24 --outfile=dist/index.cjs",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "lint": "tsc --noEmit && ultracite check",

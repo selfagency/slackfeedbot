@@ -1,29 +1,38 @@
 import * as core from "@actions/core";
 import type { Icons } from "../types.ts";
 
-const STRIP_PREFIX_RE = /^(status|feeds?|rss)\./u;
+const STRIP_PREFIX_RE = /^(?:status|feeds?|rss)\./u;
+
+// Icon sizes to prefer, best first; falls back to whichever icon exists
+const PREFERRED_SIZES = ["180x180", "144x144", "72x72"];
+
+const pickIcon = (icons: NonNullable<Icons["icons"]>): string | undefined => {
+  for (const size of PREFERRED_SIZES) {
+    const hit = icons.find((icon) => icon?.sizes === size && icon?.src);
+    if (hit?.src) {
+      return hit.src;
+    }
+  }
+  return icons[0]?.src;
+};
 
 // Gets the website's favicon
-const getFeedImg = async (rssFeed: string): Promise<string | undefined> => {
+const getFeedImg = async (
+  rssFeed: string,
+  baseUrl = "https://favicongrabber.com"
+): Promise<string | undefined> => {
   const url = new URL(rssFeed);
   const host = url.hostname.replace(STRIP_PREFIX_RE, "");
   core.debug(`Getting favicons for ${host}`);
 
   let favicon: string | undefined;
   try {
-    const icons = (await (
-      await fetch(`https://favicongrabber.com/api/grab/${host}`)
-    ).json()) as Icons | undefined;
+    const res = await fetch(`${baseUrl}/api/grab/${host}`);
+    const icons = (await res.json()) as Icons | undefined;
     core.debug(`Icons: ${JSON.stringify(icons)}`);
 
     if (icons?.icons) {
-      favicon =
-        icons.icons.find(
-          (i) =>
-            i?.sizes === "180x180" ||
-            i?.sizes === "144x144" ||
-            i?.sizes === "72x72"
-        )?.src || icons.icons[0]?.src;
+      favicon = pickIcon(icons.icons);
       core.debug(`Favicon: ${favicon}`);
     }
   } catch (err) {

@@ -2,7 +2,13 @@ import * as core from "@actions/core";
 import dayjs from "dayjs";
 import { compile } from "html-to-text";
 import { parseHTML } from "linkedom";
-import type { Block, Payload, RssFeed, RssFeedItem } from "../types.ts";
+import type {
+  Block,
+  BlockText,
+  Payload,
+  RssFeed,
+  RssFeedItem,
+} from "../types.ts";
 import { getFeedImg } from "./feedimg.ts";
 
 const html2txt = compile({
@@ -94,7 +100,7 @@ const genPayload = async (
         },
       });
     } else {
-      const fields: Block[] = [];
+      const fields: BlockText[] = [];
 
       if (showLink) {
         fields.push({
