@@ -27015,6 +27015,7 @@ var writeCache = async (feedTitle, rssFeed, cacheDir, filtered, cached) => {
 // src/lib/deliver.ts
 var MAX_ATTEMPTS = 3;
 var RETRY_FLOOR_MS = 1e3;
+var WEBHOOK_TIMEOUT_MS = 15e3;
 var defaultSleep = (ms) => new Promise((resolve) => {
   setTimeout(resolve, ms);
 });
@@ -27035,19 +27036,40 @@ var isOk = (platform2, status, body) => {
   }
   return status === 204 || status === 200;
 };
+var resolveTarget = (webhook, platform2) => {
+  const target = new URL(webhook);
+  if (platform2 === "discord") {
+    target.searchParams.set("wait", "true");
+  }
+  return target.toString();
+};
 var deliver = (payload, webhook, options) => {
   const fetchImpl = options.fetchImpl ?? fetch;
   const sleep = options.sleep ?? defaultSleep;
+  const target = resolveTarget(webhook, options.platform);
+  const timeoutMs = options.timeoutMs ?? WEBHOOK_TIMEOUT_MS;
   const attempt = async (n) => {
-    const res = await fetchImpl(webhook, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Accept: "application/json"
-      }
-    });
-    const body = await res.text();
+    let res;
+    let body;
+    try {
+      res = await fetchImpl(target, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Accept: "application/json"
+        },
+        signal: AbortSignal.timeout(timeoutMs)
+      });
+      body = await res.text();
+    } catch (err) {
+      return {
+        platform: options.platform,
+        ok: false,
+        status: 0,
+        body: err instanceof Error ? err.message : String(err)
+      };
+    }
     if (res.status === 429 && n < MAX_ATTEMPTS) {
       const wait = retryAfterMs(res);
       if (wait !== void 0) {

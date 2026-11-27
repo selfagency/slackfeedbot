@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
 import type { DeliverResult } from "../types.ts";
 import { deliver } from "./deliver.ts";
@@ -128,5 +129,62 @@ describe("deliver", () => {
     });
     expect(result.ok).toBe(false);
     expect(f.calls.count).toBe(1);
+  });
+
+  it("appends wait=true for Discord webhooks and preserves query params", async () => {
+    const seen: string[] = [];
+    const impl = ((url: RequestInfo | URL): Promise<Response> => {
+      seen.push(String(url));
+      return Promise.resolve(new Response("{}", { status: 200 }));
+    }) as unknown as typeof fetch;
+
+    await deliver(
+      {},
+      "https://discord.com/api/webhooks/123/token?thread_id=456",
+      {
+        platform: "discord",
+        fetchImpl: impl,
+      }
+    );
+    await deliver({}, SLACK, { platform: "slack", fetchImpl: impl });
+
+    expect(seen[0]).toContain("wait=true");
+    expect(seen[0]).toContain("thread_id=456");
+    expect(seen[1]).not.toContain("wait=");
+  });
+
+  it("captures connection errors as failed deliveries without retrying", async () => {
+    const impl = ((): Promise<Response> =>
+      Promise.reject(new TypeError("fetch failed"))) as unknown as typeof fetch;
+    const result = await deliver({}, SLACK, {
+      platform: "slack",
+      fetchImpl: impl,
+      sleep: noSleep,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(0);
+    expect(result.body).toBe("fetch failed");
+  });
+
+  it("times out slow webhook responses", async () => {
+    const server = createServer(() => {
+      // Holds the request open until the client aborts.
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+
+    const result = await deliver({}, `http://127.0.0.1:${port}`, {
+      platform: "slack",
+      timeoutMs: 50,
+    });
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(0);
   });
 });
