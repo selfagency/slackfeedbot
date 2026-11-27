@@ -32,8 +32,11 @@ inputs:
   show_link:
     description: "Show link in output"
     required: false
-  show_description:
+  show_desc:
     description: "Show description in output"
+    required: false
+  show_img:
+    description: "Show image in output"
     required: false
   unfurl:
     description: "Unfurl links"
