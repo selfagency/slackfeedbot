@@ -4,6 +4,12 @@ Push RSS feed updates to Slack or Discord via GitHub Actions.
 
 ![Sample output](https://user-images.githubusercontent.com/2541728/159546371-a1b61c2f-8fc8-40f3-b888-a8ae0e85507f.png)
 
+## What's new in 2.0.1
+
+- **Reliability**: Discord deliveries send `wait=true` (message-save failures are real failures now); all external calls hard-timeout (feeds 10s, webhook 15s); feed fetching uses our own fetch path (no more `url.parse` deprecation warnings).
+- **Correctness**: feeds whose items lack dates are skipped instead of reposted forever; Discord self-heals the committed bundle after Dependabot merges (CI fails on a stale `dist/index.cjs`).
+- **Polish**: Slack notification-preview `text` fallback; feed/webhook usernames clamped.
+
 ## What's new in 2.0.0
 
 - Runs on the **Node 24** GitHub Actions runtime (Node 16/20 runtimes are gone from hosted runners).
@@ -29,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: "selfagency/slackfeedbot@v2.0.0"
+        uses: "selfagency/slackfeedbot@v2.0.1"
         with:
           rss: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
@@ -51,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: NYT
-        uses: "selfagency/slackfeedbot@v2.0.0"
+        uses: "selfagency/slackfeedbot@v2.0.1"
         with:
           rss: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
           discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -85,7 +91,7 @@ jobs:
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-
       - name: NYT
-        uses: "selfagency/slackfeedbot@v2.0.0"
+        uses: "selfagency/slackfeedbot@v2.0.1"
         with:
           rss: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}

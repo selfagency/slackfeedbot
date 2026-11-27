@@ -88,6 +88,7 @@ Support: `src/lib/feedimg.ts` (favicon via favicongrabber.com, base-URL injectab
 
 - `cacheSlug()` in `src/lib/cache.ts` appends `${slug}-…` to itself — self-referential but deterministic. Changing the hash scheme invalidates every deployed cache → mass reposts. Commented in source.
 - Cache-mode filtering keeps a 1-hour recency window regardless of interval.
-- Slack delivery success requires body `ok`; a 200 with error text (e.g. `invalid_payload`) is a failure.
-- Discord messages use `wait`-less POSTs (204); delivery verification relies on status codes + Retry-After honoring.
+- Slack delivery success requires body `ok`; a 200 with error text (e.g. `invalid_payload`) is a failure. Discord POSTs send `wait=true`, so save failures return real 400s instead of a silent 204.
+- External calls carry hard timeouts: feed fetch 10s (`FEED_TIMEOUT_MS`, getfeed), favicon 10s (`FAVICON_TIMEOUT_MS`, feedimg), webhook POST 15s (`WEBHOOK_TIMEOUT_MS`, deliver). Feed fetching is our own `fetch` + `parseString` (no rss-parser `parseURL`, no `url.parse` deprecation warnings).
+- Feed items without dates get `created = 0` and are **skipped** in both modes (no recency evidence → no publication; prevents reposts).
 - Scheduled workflows run from the default branch only and auto-disable after 60 days of repository inactivity (public repos) — use `workflow_dispatch` for manual smoke tests.
