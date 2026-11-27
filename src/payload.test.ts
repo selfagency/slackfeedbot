@@ -1,7 +1,10 @@
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { describe, expect, it } from "vitest";
 import { genPayload } from "./lib/payload.ts";
 import type { RssFeed, RssFeedItem } from "./types.ts";
+
+dayjs.extend(utc);
 
 const FEED = "https://example.com/feed.xml";
 const FEED_IMAGE = "https://example.com/icon.png";
@@ -81,7 +84,7 @@ describe("genPayload", () => {
     expect(payload.blocks[2].type).toBe("context");
     const contextText = payload.blocks[2].elements?.[0]?.text ?? "";
     expect(contextText).toBe(
-      `Published ${dayjs(TS).format("MMM D @ h:mma")} UTC`
+      `Published ${dayjs(TS).utc().format("MMM D @ h:mma")} UTC`
     );
   });
 
@@ -101,6 +104,39 @@ describe("genPayload", () => {
     expect(payload.blocks[1].text).toBeUndefined();
     expect(payload.blocks[1].fields).toHaveLength(0);
     expect(payload.blocks[1].accessory).toBeUndefined();
+  });
+
+  it("entity-escapes control characters so feed text cannot inject Slack mentions", async () => {
+    const payload = await gen([
+      item({
+        title: "AT&T & Sons",
+        description: "<!channel> &amp; <!here> <b>bold</b>",
+        link: "<@U123>",
+      }),
+    ]);
+
+    const headerText = payload.blocks[0]?.text?.text ?? "";
+    expect(headerText).toBe("AT&amp;T &amp; Sons");
+
+    const rendered = JSON.stringify(payload);
+    expect(rendered).not.toContain("<!channel>");
+    expect(rendered).not.toContain("<!here>");
+    expect(rendered).not.toContain("<@U123>");
+  });
+
+  it("renders the date in UTC", async () => {
+    const payload = await gen([
+      item({ created: Date.parse("2026-01-02T03:04:05Z") }),
+    ]);
+    const [, , context] = payload.blocks;
+    const contextText = context.elements?.[0]?.text ?? "";
+    expect(contextText).toBe("Published Jan 2 @ 3:04am UTC");
+  });
+
+  it("omits the read-more field when the item has no link", async () => {
+    const payload = await gen([item({ link: undefined })], { showDate: false });
+    const [, section] = payload.blocks;
+    expect(section.fields).toHaveLength(0);
   });
 
   it("suppresses description text that just repeats the read-more link", async () => {

@@ -52,6 +52,9 @@ const run = async (deps: RunDeps): Promise<void> => {
     check();
 
     const slackWebhook = getInput("slack_webhook");
+    if (slackWebhook.length > 0) {
+      core.setSecret(slackWebhook);
+    }
     const rssFeed = getInput("rss");
     const feedName = getInput("feed_name");
     const feedImg = getInput("feed_image");

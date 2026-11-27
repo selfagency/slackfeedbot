@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { compile } from "html-to-text";
 import { parseHTML } from "linkedom";
 import type {
@@ -11,9 +12,21 @@ import type {
 } from "../types.ts";
 import { getFeedImg } from "./feedimg.ts";
 
+dayjs.extend(utc);
+
 const html2txt = compile({
   wordwrap: 255,
 });
+
+// Slack treats &, <, and > as control characters; these entities are decoded
+// for display, which also neutralizes <!channel>/<@user>-style injection.
+const escapeSlack = (text: string): string =>
+  text.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
+
+// Feed-provided URLs could carry "<", ">", or a mention-style prefix; strip
+// them so our own <url|label> sequence stays a plain link.
+const sanitizeUrl = (url: string): string =>
+  url.replace(/[<>\s]/gu, "").replace(/^[@!]/u, "");
 
 const isElement = (node: Node): node is Element => node.nodeType === 1; // ELEMENT_NODE
 
@@ -25,7 +38,7 @@ const convertChildren = (node: Node | null | undefined): string =>
 // Converts HTML to Slack mrkdwn: links, emphasis, bullets, and line breaks
 const convertNode = (node: Node): string => {
   if (node.nodeType === 3) {
-    return node.textContent ?? ""; // TEXT_NODE
+    return escapeSlack(node.textContent ?? ""); // TEXT_NODE
   }
   if (!isElement(node)) {
     return "";
@@ -87,25 +100,27 @@ const genPayload = async (
     if (item.title) {
       blocks.push({
         type: "header",
-        text: { type: "plain_text", text: html2txt(item.title) },
+        text: { type: "plain_text", text: escapeSlack(html2txt(item.title)) },
       });
     }
 
     if (unfurl) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `<${item.link}|Read more>`,
-        },
-      });
+      if (item.link) {
+        blocks.push({
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `<${sanitizeUrl(item.link)}|Read more>`,
+          },
+        });
+      }
     } else {
       const fields: BlockText[] = [];
 
-      if (showLink) {
+      if (showLink && item.link) {
         fields.push({
           type: "mrkdwn",
-          text: `<${item.link}|Read more>`,
+          text: `<${sanitizeUrl(item.link)}|Read more>`,
         });
       }
 
@@ -134,7 +149,9 @@ const genPayload = async (
           elements: [
             {
               type: "mrkdwn",
-              text: `Published ${dayjs(item.created).format("MMM D @ h:mma")} UTC`,
+              text: `Published ${dayjs(item.created ?? 0)
+                .utc()
+                .format("MMM D @ h:mma")} UTC`,
             },
           ],
         });

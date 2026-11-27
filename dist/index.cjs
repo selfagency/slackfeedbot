@@ -26232,6 +26232,83 @@ var require_rss_parser = __commonJS({
   }
 });
 
+// node_modules/dayjs/plugin/utc.js
+var require_utc = __commonJS({
+  "node_modules/dayjs/plugin/utc.js"(exports2, module2) {
+    !(function(t, i) {
+      "object" == typeof exports2 && "undefined" != typeof module2 ? module2.exports = i() : "function" == typeof define && define.amd ? define(i) : (t = "undefined" != typeof globalThis ? globalThis : t || self).dayjs_plugin_utc = i();
+    })(exports2, (function() {
+      "use strict";
+      var t = "minute", i = /[+-]\d\d(?::?\d\d)?/g, e = /([+-]|\d\d)/g;
+      return function(s, f, n) {
+        var u = f.prototype;
+        n.utc = function(t2) {
+          var i2 = { date: t2, utc: true, args: arguments };
+          return new f(i2);
+        }, u.utc = function(i2) {
+          var e2 = n(this.toDate(), { locale: this.$L, utc: true });
+          return i2 ? e2.add(this.utcOffset(), t) : e2;
+        }, u.local = function() {
+          return n(this.toDate(), { locale: this.$L, utc: false });
+        };
+        var r = u.parse;
+        u.parse = function(t2) {
+          t2.utc && (this.$u = true), this.$utils().u(t2.$offset) || (this.$offset = t2.$offset), r.call(this, t2);
+        };
+        var o = u.init;
+        u.init = function() {
+          if (this.$u) {
+            var t2 = this.$d;
+            this.$y = t2.getUTCFullYear(), this.$M = t2.getUTCMonth(), this.$D = t2.getUTCDate(), this.$W = t2.getUTCDay(), this.$H = t2.getUTCHours(), this.$m = t2.getUTCMinutes(), this.$s = t2.getUTCSeconds(), this.$ms = t2.getUTCMilliseconds();
+          } else o.call(this);
+        };
+        var a = u.utcOffset;
+        u.utcOffset = function(s2, f2) {
+          var n2 = this.$utils().u;
+          if (n2(s2)) return this.$u ? 0 : n2(this.$offset) ? a.call(this) : this.$offset;
+          if ("string" == typeof s2 && (s2 = (function(t2) {
+            void 0 === t2 && (t2 = "");
+            var s3 = t2.match(i);
+            if (!s3) return null;
+            var f3 = ("" + s3[0]).match(e) || ["-", 0, 0], n3 = f3[0], u3 = 60 * +f3[1] + +f3[2];
+            return 0 === u3 ? 0 : "+" === n3 ? u3 : -u3;
+          })(s2), null === s2)) return this;
+          var u2 = Math.abs(s2) <= 16 ? 60 * s2 : s2;
+          if (0 === u2) return this.utc(f2);
+          var r2 = this.clone();
+          if (f2) return r2.$offset = u2, r2.$u = false, r2;
+          var o2 = this.$u ? this.toDate().getTimezoneOffset() : -1 * this.utcOffset();
+          return (r2 = this.local().add(u2 + o2, t)).$offset = u2, r2.$x.$localOffset = o2, r2;
+        };
+        var h = u.format;
+        u.format = function(t2) {
+          var i2 = t2 || (this.$u ? "YYYY-MM-DDTHH:mm:ss[Z]" : "");
+          return h.call(this, i2);
+        }, u.valueOf = function() {
+          var t2 = this.$utils().u(this.$offset) ? 0 : this.$offset + (this.$x.$localOffset || this.$d.getTimezoneOffset());
+          return this.$d.valueOf() - 6e4 * t2;
+        }, u.isUTC = function() {
+          return !!this.$u;
+        }, u.toISOString = function() {
+          return this.toDate().toISOString();
+        }, u.toString = function() {
+          return this.toDate().toUTCString();
+        };
+        var l = u.toDate;
+        u.toDate = function(t2) {
+          return "s" === t2 && this.$offset ? n(this.format("YYYY-MM-DD HH:mm:ss:SSS")).toDate() : l.call(this);
+        };
+        var c = u.diff;
+        u.diff = function(t2, i2, e2) {
+          if (t2 && this.$u === t2.$u) return c.call(this, t2, i2, e2);
+          var s2 = this.local(), f2 = n(t2).local();
+          return c.call(s2, f2, i2, e2);
+        };
+      };
+    }));
+  }
+});
+
 // node_modules/linkedom/commonjs/canvas-shim.cjs
 var require_canvas_shim = __commonJS({
   "node_modules/linkedom/commonjs/canvas-shim.cjs"(exports2, module2) {
@@ -26699,6 +26776,9 @@ var ExitCode;
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
 })(ExitCode || (ExitCode = {}));
+function setSecret(secret) {
+  issueCommand("add-mask", {}, secret);
+}
 function getInput(name2, options) {
   const val = process.env[`INPUT_${name2.replace(/ /g, "_").toUpperCase()}`] || "";
   if (options && options.required && !val) {
@@ -26748,6 +26828,9 @@ var run = async (deps) => {
   try {
     check();
     const slackWebhook = getInput2("slack_webhook");
+    if (slackWebhook.length > 0) {
+      setSecret(slackWebhook);
+    }
     const rssFeed = getInput2("rss");
     const feedName = getInput2("feed_name");
     const feedImg = getInput2("feed_image");
@@ -26971,6 +27054,7 @@ var getFeed = async (rssFeed, cacheDir, interval) => {
 
 // src/lib/payload.ts
 var import_dayjs2 = __toESM(require_dayjs_min(), 1);
+var import_utc = __toESM(require_utc(), 1);
 
 // node_modules/domelementtype/lib/esm/index.js
 var esm_exports = {};
@@ -49877,14 +49961,17 @@ var getFeedImg = async (rssFeed, baseUrl = "https://favicongrabber.com") => {
 };
 
 // src/lib/payload.ts
+import_dayjs2.default.extend(import_utc.default);
 var html2txt = compile({
   wordwrap: 255
 });
+var escapeSlack = (text) => text.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
+var sanitizeUrl = (url) => url.replace(/[<>\s]/gu, "").replace(/^[@!]/u, "");
 var isElement = (node) => node.nodeType === 1;
 var convertChildren = (node) => Array.from(node?.childNodes ?? []).map(convertNode).join("");
 var convertNode = (node) => {
   if (node.nodeType === 3) {
-    return node.textContent ?? "";
+    return escapeSlack(node.textContent ?? "");
   }
   if (!isElement(node)) {
     return "";
@@ -49925,23 +50012,25 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
     if (item.title) {
       blocks.push({
         type: "header",
-        text: { type: "plain_text", text: html2txt(item.title) }
+        text: { type: "plain_text", text: escapeSlack(html2txt(item.title)) }
       });
     }
     if (unfurl) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `<${item.link}|Read more>`
-        }
-      });
+      if (item.link) {
+        blocks.push({
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `<${sanitizeUrl(item.link)}|Read more>`
+          }
+        });
+      }
     } else {
       const fields = [];
-      if (showLink) {
+      if (showLink && item.link) {
         fields.push({
           type: "mrkdwn",
-          text: `<${item.link}|Read more>`
+          text: `<${sanitizeUrl(item.link)}|Read more>`
         });
       }
       blocks.push({
@@ -49962,7 +50051,7 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
           elements: [
             {
               type: "mrkdwn",
-              text: `Published ${(0, import_dayjs2.default)(item.created).format("MMM D @ h:mma")} UTC`
+              text: `Published ${(0, import_dayjs2.default)(item.created ?? 0).utc().format("MMM D @ h:mma")} UTC`
             }
           ]
         });

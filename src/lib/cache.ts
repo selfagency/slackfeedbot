@@ -27,6 +27,10 @@ const hash = (str: string): string =>
   createHash("sha256").update(str).digest("hex");
 
 // Generates a hashable string from the CacheRecord
+// WARNING: cacheSlug accidentally appends the slug to itself when adding the
+// date parts ("${slug}-${date}"). It remains deterministic, so the scheme
+// still works — do NOT "fix" it: any hash-scheme change invalidates every
+// deployed cache file and would cause a mass repost on the next run.
 const cacheSlug = (item: CacheRecord): string => {
   const { feedTitle, title, created } = item;
 
