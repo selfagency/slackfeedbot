@@ -1,6 +1,6 @@
 # Plan: Delivery Robustness & Artifact Integrity Follow-ups
 
-Status: **DRAFT — awaiting approval.** Companion to node24-discord-modernization; covers the seven post-release findings.
+Status: **COMPLETE & RELEASED as v2.0.1** (P1 a05664b, P2 6bf4fc1, P3 93af8df, P4 bc59b5e, P5 454e0a2; verified: dogfood run success with 0 errors and 0 `url.parse` warnings). Original draft below.
 
 ## Success Criteria
 
