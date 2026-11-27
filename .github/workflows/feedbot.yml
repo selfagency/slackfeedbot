@@ -4,7 +4,7 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 jobs:
-  rss-to-slack:
+  feed-to-discord:
     runs-on: ubuntu-latest
     steps:
       - name: Generate cache key
@@ -19,57 +19,7 @@ jobs:
           path: ./slackfeedbot-cache
           key: feed-cache-i-${{ steps.generate-key.outputs.cache-key }}
           restore-keys: feed-cache-i-
-      - name: LAT
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://www.latimes.com/rss2.0.xml"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: WaPo
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://feeds.washingtonpost.com/rss/homepage"
-          feed_name: "Washington Post"
-          feed_image: "https://www.washingtonpost.com/wp-stat/assets/favicons/touch-icon-iphone.png"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: GitHub
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://www.githubstatus.com/history.rss"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: Google Cloud
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://status.cloud.google.com/en/feed.atom"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: Zoom
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://status.zoom.us/history.rss"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: Linear
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://linearstatus.com/history.rss"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
-      - name: Stripe
-        uses: "selfagency/slackfeedbot@dev"
-        with:
-          rss: "https://status.stripe.com/current/atom.xml"
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          cache_dir: "./slackfeedbot-cache"
-        continue-on-error: true
+      - name: Merged feeds → Discord
       - name: Merged feeds → Discord
         uses: "selfagency/slackfeedbot@dev"
         with:

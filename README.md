@@ -73,13 +73,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate cache key
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         id: generate-key
         with:
           script: |
             core.setOutput('cache-key', new Date().valueOf())
       - name: Retrieve cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ./slackfeedbot-cache
           key: feed-cache-${{ steps.generate-key.outputs.cache-key }}

@@ -67,7 +67,7 @@ Support: `src/lib/feedimg.ts` (favicon via favicongrabber.com, base-URL injectab
 ## CI/CD
 
 - `.github/workflows/ci.yml` — lint + tests on push (main/dev) and PRs.
-- `.github/workflows/feedbot.yml` — dogfooding: cron `*/15` + `workflow_dispatch`; Slack steps + Discord step (needs `DISCORD_WEBHOOK` secret), `continue-on-error: true`, cache via actions/cache.
+- `.github/workflows/feedbot.yml` — dogfooding: cron `*/15` + `workflow_dispatch`; single Discord step against the owner's merged-feed URL (needs `DISCORD_WEBHOOK` secret), `continue-on-error: true`, cache via actions/cache. Slack dogfood steps were removed — the owner has no Slack team to test with; Slack delivery remains supported for users.
 - `.github/workflows/release.yml` — push to `main`: `EndBug/version-check` detects a `package.json` version change → `softprops/action-gh-release` tags `v{version}`.
 - No in-repo PR gate beyond ci.yml; DeepSource analyzes server-side.
 
