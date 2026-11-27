@@ -89,6 +89,16 @@ describe("buildDiscordMessages", () => {
     expect(embed.url).toBe("https://example.com/Post");
   });
 
+  it("clamps the webhook username to 80 characters", () => {
+    const [message] = buildDiscordMessages(
+      [item("p0")],
+      { title: "T".repeat(120), items: [] },
+      opts
+    );
+    expect(message.username?.length).toBe(80);
+    expect(message.username?.endsWith("…")).toBe(true);
+  });
+
   it("chunks messages at 10 embeds", () => {
     const items = Array.from({ length: 12 }, (_, index) => item(`p${index}`));
     const messages = buildDiscordMessages(items, FEED, opts);

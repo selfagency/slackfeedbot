@@ -48,6 +48,7 @@ interface Payload {
   as_user?: boolean;
   blocks: Block[];
   icon_url?: string;
+  text?: string;
   unfurl_links?: boolean;
   unfurl_media?: boolean;
   username?: string;

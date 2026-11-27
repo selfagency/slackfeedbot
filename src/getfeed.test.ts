@@ -196,15 +196,25 @@ describe("getFeed", () => {
     expect(unfiltered.items ?? []).toEqual([]);
   });
 
-  it("uses now for items without a date", async () => {
+  it("skips date-less items in cache mode (recency window)", async () => {
     await startFeed(
       feedXml([itemXml({ title: "NoDate", link: "https://x.dev/n" })])
     );
-    const before = Date.now();
+    const dir = await mkdtemp(join(tmpdir(), "slackfeedbot-nodate-"));
+    try {
+      const { filtered } = await getFeed(feedUrl, dir, undefined);
+      expect(filtered).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("skips date-less items in interval mode", async () => {
+    await startFeed(
+      feedXml([itemXml({ title: "NoDate", link: "https://x.dev/n" })])
+    );
     const { filtered } = await getFeed(feedUrl, undefined, 15);
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].created ?? 0).toBeGreaterThanOrEqual(before);
-    expect(filtered[0].created ?? 0).toBeLessThanOrEqual(Date.now());
+    expect(filtered).toEqual([]);
   });
 
   it("rejects non-200 feed responses with the status code", async () => {

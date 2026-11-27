@@ -173,6 +173,21 @@ describe("genPayload", () => {
     expect(payload.icon_url).toBe("https://override.example/logo.png");
   });
 
+  it("sets a text preview from the first item title and clamps usernames to 80", async () => {
+    const payload = await gen([item({ title: "First post" }), item({})]);
+    expect(payload.text).toBe("First post");
+    expect(payload.username?.length).toBeLessThanOrEqual(80);
+
+    const longNamed = await gen([item({})], { feedName: "F".repeat(120) });
+    expect(longNamed.username).toHaveLength(80);
+  });
+
+  it("falls back to a count when no item has a title", async () => {
+    const payload = await gen([item({ title: undefined })]);
+    expect(payload.text).toBe("1 new feed items");
+    expect(payload.username).toBe("Test Feed");
+  });
+
   it("converts links, lists, and entities in descriptions to mrkdwn", async () => {
     const payload = await gen([
       item({

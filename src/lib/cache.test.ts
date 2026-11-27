@@ -105,4 +105,23 @@ describe("writeCache/checkCache roundtrip", () => {
     const path = join(cache, "example_com.json");
     await expect(readFile(path, "utf8")).resolves.toBeTruthy();
   });
+
+  it("hashes date-less items deterministically without a date component", async () => {
+    const cache = await makeDir();
+    await writeCache(
+      FEED_TITLE,
+      FEED,
+      cache,
+      [{ title: "NoDate", created: 0 }],
+      []
+    );
+    const cached = await readCache(FEED, cache);
+
+    const feed: RssFeed = {
+      title: FEED_TITLE,
+      items: [{ title: "NoDate", created: 0 }],
+    };
+    const fresh = await checkCache(feed, cached);
+    expect(fresh).toEqual([]);
+  });
 });

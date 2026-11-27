@@ -10,6 +10,7 @@ const MAX_EMBEDS_PER_MESSAGE = 10;
 const MAX_MESSAGE_CHARS = 6000;
 const MAX_EMBED_DESCRIPTION = 4096;
 const MAX_EMBED_TITLE = 256;
+const MAX_USERNAME = 80;
 const ELLIPSIS = "…";
 
 const clamp = (text: string, max: number): string =>
@@ -106,7 +107,7 @@ const buildDiscordMessages = (
       : "FeedBot";
 
   const payload: DiscordPayload = {
-    username,
+    username: clamp(username, MAX_USERNAME),
     embeds: [],
     allowed_mentions: { parse: [] },
   };

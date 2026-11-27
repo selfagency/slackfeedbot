@@ -101,13 +101,20 @@ const genPayload = async (
     }
   }
 
+  const firstTitle = filtered.find((item) => item.title !== undefined)?.title;
+  const text = firstTitle
+    ? escapeSlack(plainTitle(firstTitle))
+    : `${filtered.length} new feed items`;
+  const chosenName = feedName.length
+    ? feedName
+    : unfiltered.title
+      ? plainTitle(unfiltered.title)
+      : "FeedBot";
+
   const payload: Payload = {
     as_user: false,
-    username: feedName.length
-      ? feedName
-      : unfiltered.title
-        ? plainTitle(unfiltered.title)
-        : "FeedBot",
+    text,
+    username: chosenName.slice(0, 80),
     icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
     unfurl_links: unfurl,
     unfurl_media: unfurl,

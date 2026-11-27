@@ -30,7 +30,7 @@ const fetchFeed = async (
 
 const toTimestamp = (item: Parser.Item): number => {
   const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
-  return Number.isNaN(parsed) ? Date.now() : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 // Prefers the full HTML body, then any description variants

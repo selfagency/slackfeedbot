@@ -50023,6 +50023,7 @@ var MAX_EMBEDS_PER_MESSAGE = 10;
 var MAX_MESSAGE_CHARS = 6e3;
 var MAX_EMBED_DESCRIPTION = 4096;
 var MAX_EMBED_TITLE = 256;
+var MAX_USERNAME = 80;
 var ELLIPSIS = "\u2026";
 var clamp = (text, max) => text.length > max ? `${text.slice(0, max - 1)}${ELLIPSIS}` : text;
 var embedChars = (embed) => (embed.title?.length ?? 0) + (embed.description?.length ?? 0);
@@ -50072,7 +50073,7 @@ var buildDiscordMessages = (filtered, unfiltered, opts) => {
   const embeds = filtered.map((item) => toEmbed(item, opts));
   const username = opts.feedName.length ? opts.feedName : unfiltered.title ? plainTitle(unfiltered.title) : "FeedBot";
   const payload = {
-    username,
+    username: clamp(username, MAX_USERNAME),
     embeds: [],
     allowed_mentions: { parse: [] }
   };
@@ -50106,7 +50107,7 @@ var fetchFeed = async (rssFeed, timeoutMs) => {
 };
 var toTimestamp = (item) => {
   const parsed = Date.parse(item.isoDate ?? item.pubDate ?? "");
-  return Number.isNaN(parsed) ? Date.now() : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 var toHtml = (item) => {
   const record = item;
@@ -50218,9 +50219,9 @@ import_dayjs2.default.extend(import_utc.default);
 var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl, showDesc, showImg, showDate, showLink) => {
   const blocks = [];
   for (const item of filtered) {
-    let text = "";
+    let text2 = "";
     if (!unfurl && item.description) {
-      text = htmlToMrkdwn(item.description, "slack");
+      text2 = htmlToMrkdwn(item.description, "slack");
     }
     if (item.title) {
       blocks.push({
@@ -50253,9 +50254,9 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
           type: "image",
           image_url: item.image
         } : void 0,
-        text: showDesc && !text.trim().toLowerCase().startsWith("read more") ? {
+        text: showDesc && !text2.trim().toLowerCase().startsWith("read more") ? {
           type: "mrkdwn",
-          text
+          text: text2
         } : void 0
       });
       if (showDate) {
@@ -50271,9 +50272,13 @@ var genPayload = async (filtered, unfiltered, rssFeed, feedName, feedImg, unfurl
       }
     }
   }
+  const firstTitle = filtered.find((item) => item.title !== void 0)?.title;
+  const text = firstTitle ? escapeSlack(plainTitle(firstTitle)) : `${filtered.length} new feed items`;
+  const chosenName = feedName.length ? feedName : unfiltered.title ? plainTitle(unfiltered.title) : "FeedBot";
   const payload = {
     as_user: false,
-    username: feedName.length ? feedName : unfiltered.title ? plainTitle(unfiltered.title) : "FeedBot",
+    text,
+    username: chosenName.slice(0, 80),
     icon_url: feedImg.length ? feedImg : await getFeedImg(rssFeed),
     unfurl_links: unfurl,
     unfurl_media: unfurl,
